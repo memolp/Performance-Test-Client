@@ -3,12 +3,12 @@
 # 用户创建完成后调用
 def OnInit(vuser):
     print("OnInit")
-    vuser.Connect("10.6.7.69",7091)
+    vuser.Connect("127.0.0.1",7091)
 
 
 # 收到协议调用 (data需要手动分包)
-def OnMessage(vuser, sockid, data):
-    print("OnMessage")
+def OnMessage(vuser, sockid, packet):
+    print("OnMessage",packet)
 
 
 # 并发执行调用(count未执行的次数)

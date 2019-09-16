@@ -18,6 +18,7 @@ class VSocketMgr:
     """
     _instance = None
     WIN_MAX_THREAD_NUM = 4
+    RECV_MAX_BUFF_SIZE = 1024 * 1024
     PTC_HOST = "127.0.0.1"
     PTC_PORT = 7090
     @staticmethod
@@ -62,7 +63,7 @@ class VSocketMgr:
         :param sockid:
         :return:
         """
-        sock = VSocket(vuser, sockid, self.PTC_HOST, self.PTC_PORT)
+        sock = VSocket(vuser, sockid, self.PTC_HOST, self.PTC_PORT , self.RECV_MAX_BUFF_SIZE)
         self.Register(sock)
         return sock
 

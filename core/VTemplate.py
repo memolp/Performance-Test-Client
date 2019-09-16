@@ -12,7 +12,7 @@ def OnInit(vuser):
     pass
     
 # 收到协议调用 (data需要手动分包)
-def OnMessage(vuser, sockid, data):
+def OnMessage(vuser, sockid, packet):
     pass
 
 # 并发执行调用(count未执行的次数)

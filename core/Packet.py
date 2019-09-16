@@ -95,7 +95,7 @@ class Packet(Endian):
 
     def readUnsignedByte(self):
         """ """
-        fmt = "%sb" % self._isEndian()
+        fmt = "%sB" % self._isEndian()
         res = struct.unpack(fmt, self._readbuf(1))
         return res[0]
 
@@ -157,6 +157,20 @@ class Packet(Endian):
         nlen = self.__buf.tell()
         self.__buf.seek(old_pos)
         return nlen
+
+    def clear(self):
+        """"""
+        try:
+            self.__buf.close()
+            self.__buf = BytesIO()
+            self.position = 0
+        except Exception as e:
+            print(e)
+
+    def reset(self,data):
+        """"""
+        self.clear()
+        self.writeUTFBytes(data)
 
     def _addbuf(self, value):
         """ """

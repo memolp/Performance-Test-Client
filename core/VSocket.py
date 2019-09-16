@@ -10,7 +10,7 @@ class VSocket:
     """
     user udp socket
     """
-    def __init__(self, vuser, sockid, host, port):
+    def __init__(self, vuser, sockid, host, port , maxbufszie):
         """
         创建socket
         :param vuser:
@@ -24,13 +24,14 @@ class VSocket:
         self.__server = host
         self.__port  = port
         self.__sockid = sockid
+        self.__maxbufszie = maxbufszie
 
     def OnReceive(self):
         """
         从压测中心接收到协议数据
         :return:
         """
-        data, address = self.__sock.recvfrom(1024)
+        data, address = self.__sock.recvfrom(self.__maxbufszie)
         self.__vuser.OnReceive(self.__sockid,data)
 
     def OnSend(self, buff):

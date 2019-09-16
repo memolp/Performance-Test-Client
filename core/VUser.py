@@ -35,6 +35,7 @@ class VUser:
         self.__sendPacketIdx = 0
         self.__recvPacketIdx = 0
         self.__finishTranslation = []
+        self.__cachePacketData = Packet()
 
     def SetData(self, key, data):
         """
@@ -209,7 +210,52 @@ class VUser:
         :return:
         """
         # 这里为什么会走VSocketMgr 主要是希望可以明确 这个返回是来自网络线程
-        VSocketMgr.GetInstance().OnMessage(self, sockid, data)
+        self.__cachePacketData.writeUTFBytes(data)
+        self.__cachePacketData.position = 0
+        length = self.__cachePacketData.length()
+        # 这里的分包只是分底层组装的包，具体服务器返回的协议内容有没有完整，需要OnMessage中自己判断
+        while length - self.__cachePacketData.position > 0:
+            # 长度不足
+            if length - self.__cachePacketData.position < 19:
+                break
+            # 开始标记不对
+            if self.__cachePacketData.readUnsignedByte() != 0xEF:
+                self.__cachePacketData.clear()
+                break
+            pack_len = self.__cachePacketData.readUnsignedInt()
+            # 协议长度不足
+            if length - self.__cachePacketData.position < pack_len:
+                self.__cachePacketData.position = length
+                break
+
+            uid = self.__cachePacketData.readUnsignedInt()
+            idx = self.__cachePacketData.readUnsignedInt()
+            # 协议序号错了
+            if self.__recvPacketIdx + 1 != idx:
+                self.__cachePacketData.clear()
+                print("recv pack idx error!!!!!local:{0},server:{1}".format(self.__recvPacketIdx+1,idx))
+                break
+            self.__recvPacketIdx += 1
+
+            msgID = self.__cachePacketData.readUnsignedShort()
+            sockid = self.__cachePacketData.readUnsignedInt()
+
+            if msgID == self.MSG_DISCONNECT:
+                VSocketMgr.GetInstance().OnDisconnect(self,sockid)
+            elif msgID == self.MSG_PACKET:
+                rdata = self.__cachePacketData.readUTFBytes(pack_len - (4 + 4 + 2 + 4))
+                VSocketMgr.GetInstance().OnMessage(self, sockid, Packet(rdata))
+                remaining = length - self.__cachePacketData.position
+                if remaining <= 0:
+                    self.__cachePacketData.clear()
+                else:
+                    cdata = self.__cachePacketData.readUTFBytes(remaining)
+                    self.__cachePacketData.reset(data)
+                length = self.__cachePacketData.length()
+            else:
+                self.__cachePacketData.clear()
+                print("recv pack msgID error!!!!!:"+msgID)
+                break
 
     def OnClose(self, sockid):
         """
