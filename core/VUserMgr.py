@@ -5,6 +5,7 @@
 """
 
 import time
+import threading
 
 from concurrent.futures import ThreadPoolExecutor
 
@@ -60,12 +61,41 @@ class VUserMgr:
         for user in self.__vuserList:
             self.OnInit(user)
 
+    def StateThread(self):
+        """
+        vuser状态线程
+        :return:
+        """
+        while True:
+            start_time = time.time()
+            # 状态回调方法执行
+            for vuser in self.__vuserList:
+                try:
+                    callback = vuser.GetStateCallback()
+                    if callback is not None:
+                        callback(vuser)
+                    callback = vuser.GetTickCallback()
+                    if callback is not None:
+                        callback(vuser)
+                except Exception as e:
+                    print(e)
+            # 花费时间正常不会超过1秒
+            cost_time = time.time() - start_time
+            if cost_time < 1.0:
+                time.sleep(1.0 - cost_time)
+            else:
+                print("cost_time :{0}!!!!!!!!".format(cost_time))
+
     def Start(self):
         """
         启动
         :return:
         """
         round_count = 0
+        # 状态线程执行
+        stateThread = threading.Thread(target=self.StateThread,args=())
+        stateThread.start()
+        # 主循环
         while True:
             start_time = time.time()
             users = self._GetVUser(self.__tps)
@@ -75,6 +105,7 @@ class VUserMgr:
                 vuser.SetTask(task)
             # 每执行一轮，+1
             round_count += 1
+
             # 花费时间正常不会超过1秒
             cost_time = time.time() - start_time
             if cost_time < 1.0:

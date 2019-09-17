@@ -34,7 +34,9 @@ class VUser:
         self.__translationList = {}
         self.__sendPacketIdx = 0
         self.__recvPacketIdx = 0
+        self.__tickCalback = None
         self.__finishTranslation = []
+        # [底层的]缓存未读取完的数据包
         self.__cachePacketData = Packet()
 
     def SetData(self, key, data):
@@ -110,6 +112,28 @@ class VUser:
         self.__currentState = self.__toState
         # 返回状态回调函数
         return self.__states[self.__toState]
+
+    def GetTickCallback(self):
+        """
+        [private]获取定时回调方法
+        :return:
+        """
+        return self.__tickCalback
+
+    def SetTickCallback(self,callback):
+        """
+        设置定时回调方法 1秒间隔
+        :param callback:
+        :return:
+        """
+        self.__tickCalback = callback
+
+    def GetState(self):
+        """
+        获取当前的状态
+        :return:
+        """
+        return self.__currentState
 
     def SetTask(self, task):
         """
@@ -221,12 +245,12 @@ class VUser:
         # 发送数据
         self.__SendPacket(packet,sockid,self.MSG_PACKET)
 
-    def CreatePacket(self):
+    def CreatePacket(self,data=None):
         """
         创建协议包
         :return: 返回一个Packet对象
         """
-        return Packet()
+        return Packet(data)
 
     def OnReceive(self, sockid, data):
         """

@@ -31,7 +31,11 @@ class VSocket:
         从压测中心接收到协议数据
         :return:
         """
-        data, address = self.__sock.recvfrom(self.__maxbufszie)
+        try:
+            data, address = self.__sock.recvfrom(self.__maxbufszie)
+        except Exception as e:
+            print(e)
+            return
         self.__vuser.OnReceive(self.__sockid,data)
 
     def OnSend(self, buff):

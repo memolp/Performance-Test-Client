@@ -87,6 +87,13 @@ class Packet(Endian):
         res = struct.unpack(fmt, self._readbuf(nlen))
         return res[0]
 
+    def readString(self):
+        """ """
+        nlen = self.readUnsignedShort()
+        if nlen > 0:
+            return self.readUTFBytes(nlen)
+        return ""
+
     def readByte(self):
         """ """
         fmt = "%sb" % self._isEndian()
@@ -138,8 +145,10 @@ class Packet(Endian):
 
     def writeString(self, value):
         """"""
-        self.writeUnsignedShort(len(value))
-        self.writeUTFBytes(value)
+        nlen = len(value)
+        self.writeUnsignedShort(nlen)
+        if nlen > 0:
+            self.writeUTFBytes(value)
 
     def writeByte(self, value):
         """"""

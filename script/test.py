@@ -6,7 +6,7 @@ def OnInit(vuser):
     vuser.Connect("127.0.0.1",7091)
 
 
-# 收到协议调用 (data需要手动分包)
+# 收到协议调用 (packet需要手动分包)
 def OnMessage(vuser, sockid, packet):
     print("OnMessage",packet)
 
