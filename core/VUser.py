@@ -164,12 +164,50 @@ class VUser:
         :return:
         """
         self.__socks[sockid] = VSocketMgr.GetInstance().CreateVSocket(self, sockid)
-        packet = self.CreatePacket(sockid, self.MSG_CONNECT)
+        packet = self.CreatePacket()
         packet.writeUnsignedByte(socktype)
         packet.writeUnsignedShort(len(host))
         packet.writeUTFBytes(host)
         packet.writeUnsignedShort(port)
-        self.Send(packet, sockid)
+        self.__SendPacket(packet, sockid, self.MSG_CONNECT)
+
+    def __SendPacket(self, packet, sockid , msgid):
+        """
+        向某个socketid 发送协议
+        :param packet:
+        :param sockid:
+        :param msgid:
+        :return:
+        """
+        if sockid not in self.__socks:
+            raise KeyError("sockid :{0} is not exist!".format(sockid))
+        # 发送的数据需要再重新包装
+        sendPacket = Packet()
+        # 起始标记
+        sendPacket.writeUnsignedByte(0xEF)
+        # 协议长度-预先站位
+        sendPacket.writeUnsignedInt(0)
+        # 用户vuer
+        sendPacket.writeUnsignedInt(self.__uid)
+        # 发送的序列号
+        sendPacket.writeUnsignedInt(self.__sendPacketIdx)
+        self.__sendPacketIdx += 1
+        # 消息ID
+        sendPacket.writeUnsignedShort(msgid)
+        # sockid
+        sendPacket.writeUnsignedByte(sockid)
+        # 内容
+        sendPacket.writeUTFBytes(packet.getvalue())
+        # 更新长度
+        sendPacket.position = 1
+        # 写入正确的协议长度 不包含起始标记和长度自己
+        sendPacket.writeUnsignedInt(sendPacket.length()-5)
+        # 发送数据
+        self.__socks[sockid].OnSend(sendPacket.getvalue())
+        # 清除
+        del packet
+        del sendPacket
+
 
     def Send(self, packet, sockid=0):
         """
@@ -180,27 +218,15 @@ class VUser:
         """
         if sockid not in self.__socks:
             raise KeyError("sockid :{0} is not exist!".format(sockid))
-        packet.position = 1
-        # 写入正确的协议长度 不包含起始标记和长度自己
-        packet.writeUnsignedInt(packet.length()-5)
-        self.__socks[sockid].OnSend(packet.getvalue())
+        # 发送数据
+        self.__SendPacket(packet,sockid,self.MSG_PACKET)
 
-    def CreatePacket(self, sockid=0, msgid=2000):
+    def CreatePacket(self):
         """
         创建协议包
-        :param sockid:
-        :param msgid: 消息ID 正常无需设置此值
         :return: 返回一个Packet对象
         """
-        packet = Packet()
-        packet.writeUnsignedByte(0xEF)
-        packet.writeUnsignedInt(0)
-        packet.writeUnsignedInt(self.__uid)
-        packet.writeUnsignedInt(self.__sendPacketIdx)
-        packet.writeUnsignedShort(msgid)
-        packet.writeUnsignedByte(sockid)
-        self.__sendPacketIdx += 1
-        return packet
+        return Packet()
 
     def OnReceive(self, sockid, data):
         """

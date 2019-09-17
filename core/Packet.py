@@ -136,6 +136,11 @@ class Packet(Endian):
         fmt = "%ss" % (len(value))
         self._addbuf(struct.pack(fmt, value))
 
+    def writeString(self, value):
+        """"""
+        self.writeUnsignedShort(len(value))
+        self.writeUTFBytes(value)
+
     def writeByte(self, value):
         """"""
         fmt = "%sb" % self._isEndian()
