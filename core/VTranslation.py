@@ -17,7 +17,13 @@ class VTranslation:
         # 毫秒
         self.__start = time.time() * 1000
         self.__end   = self.__start
+        self.__cast  = -1
 
     def Finish(self):
         """"""
         self.__end = time.time() * 1000
+        self.__cast = self.__end - self.__start
+
+    def Cost(self):
+        """"""
+        return self.__cast

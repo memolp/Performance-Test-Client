@@ -6,11 +6,11 @@
 
 import time
 import threading
+import traceback
 
 from concurrent.futures import ThreadPoolExecutor
-
 from core.VUser import VUser
-
+from core.VUtils import *
 
 class VUserMgr:
     """
@@ -68,17 +68,39 @@ class VUserMgr:
         """
         while True:
             start_time = time.time()
+            transaltion_info = {}
             # 状态回调方法执行
             for vuser in self.__vuserList:
                 try:
                     callback = vuser.GetStateCallback()
                     if callback is not None:
-                        callback(vuser)
+                        callback(vuser,*vuser.GetStateCallbackArgs())
                     callback = vuser.GetTickCallback()
                     if callback is not None:
                         callback(vuser)
                 except Exception as e:
-                    print(e)
+                    print(traceback.format_exc())
+
+                transaltions, finishtrans = vuser.GetTranslationInfo()
+                for key,trans in transaltions.items():
+                    if key not in transaltion_info:
+                        transaltion_info[key] = {"doing":0,"done":0,"max":[],"avg":[]}
+                    transaltion_info[key]["doing"] += len(trans)
+                for key,trans in finishtrans.items():
+                    if key not in transaltion_info:
+                        transaltion_info[key] = {"doing":0,"done":0,"max":[],"avg":[]}
+                    transaltion_info[key]["done"] += len(trans)
+                    if len(trans) > 0:
+                        transaltion_info[key]["max"].append(max(trans, key=lambda x:x.Cost()))
+                        transaltion_info[key]["avg"].append(avg(trans, key=lambda x:x.Cost()))
+
+            fmt_label = "{0}|in:{1}|ed:{2}|max:{3} ms|avg:{4} ms|{5}%"
+            for key,transinfo in transaltion_info.items():
+                rate = transinfo["done"] / (transinfo["done"] + transinfo["doing"]) * 100
+                max_v = max(transinfo["max"],key=lambda x:x.Cost()).Cost() if len(transinfo["max"]) >0 else -1
+                avg_v = avg(transinfo["avg"]) if len(transinfo["avg"]) >0 else -1
+                print(fmt_label.format(key,transinfo["doing"],transinfo["done"],round(max_v,2),round(avg_v,2),round(rate,2)))
+
             # 花费时间正常不会超过1秒
             cost_time = time.time() - start_time
             if cost_time < 1.0:
@@ -150,7 +172,7 @@ class VUserMgr:
         try:
             self.__script.OnInit(vuser)
         except Exception as e:
-            print(e)
+            print(traceback.format_exc())
 
     def OnConcurrence(self, vuser, count):
         """
@@ -162,4 +184,4 @@ class VUserMgr:
         try:
             self.__script.OnConcurrence(vuser, count)
         except Exception as e:
-            print(e)
+            print(traceback.format_exc())

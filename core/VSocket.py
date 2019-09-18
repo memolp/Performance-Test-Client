@@ -5,6 +5,7 @@
 """
 
 import socket
+import traceback
 
 class VSocket:
     """
@@ -24,7 +25,16 @@ class VSocket:
         self.__server = host
         self.__port  = port
         self.__sockid = sockid
+        self.__selectServer = None
         self.__maxbufszie = maxbufszie
+
+    def SetSocketServer(self,_server):
+        """
+        保存对线程server的引用
+        :param _server:
+        :return:
+        """
+        self.__selectServer = _server
 
     def OnReceive(self):
         """
@@ -34,9 +44,13 @@ class VSocket:
         try:
             data, address = self.__sock.recvfrom(self.__maxbufszie)
         except Exception as e:
-            print(e)
+            print(traceback.format_exc())
+            self.Close()
             return
-        self.__vuser.OnReceive(self.__sockid,data)
+        try:
+            self.__vuser.OnReceive(self.__sockid,data)
+        except Exception as e:
+            print(traceback.format_exc())
 
     def OnSend(self, buff):
         """
@@ -47,7 +61,7 @@ class VSocket:
         try:
             self.__sock.sendto(buff,(self.__server,self.__port))
         except Exception as e:
-            print(e)
+            print(traceback.format_exc())
 
     def GetFD(self):
         """
@@ -55,3 +69,11 @@ class VSocket:
         :return:
         """
         return self.__sock
+
+    def Close(self):
+        """
+        关闭套接字
+        :return:
+        """
+        if self.__selectServer is not None:
+            self.__selectServer.remove(self.__sock)

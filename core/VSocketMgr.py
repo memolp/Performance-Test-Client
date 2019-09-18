@@ -5,9 +5,11 @@ socket 管理器
 """
 
 import time
+import random
 import selectors
 import threading
-import random
+import traceback
+
 
 from core.VSocket import VSocket
 
@@ -78,6 +80,7 @@ class VSocketMgr:
         if not sockserver:
             return
         # 注册
+        sock.SetSocketServer(sockserver[0])
         sockserver[0].register(sock.GetFD(), selectors.EVENT_READ, sock.OnReceive)
 
     def OnMessage(self, vuser, sockid, data):
@@ -91,7 +94,7 @@ class VSocketMgr:
         try:
             self.__script.OnMessage(vuser, sockid, data)
         except Exception as e:
-            print(e)
+            print(traceback.format_exc())
 
     # 网络链接断开
     def OnDisconnect(self, vuser, sockid):
@@ -104,7 +107,7 @@ class VSocketMgr:
         try:
             self.__script.OnDisconnect(vuser, sockid)
         except Exception as e:
-            print(e)
+            print(traceback.format_exc())
 
 class _VSocketServerThread(threading.Thread):
     """
@@ -122,13 +125,18 @@ class _VSocketServerThread(threading.Thread):
             if not self.__registered:
                 time.sleep(1.0)
                 continue
-            events = self.__selector.select()
+            try:
+                events = self.__selector.select()
+            except Exception as e:
+                time.sleep(1.0)
+                print(traceback.format_exc())
+                continue
             for key, mask in events:
                 func = key.data
                 try:
                     func()
                 except Exception as e:
-                    print(e)
+                    print(traceback.format_exc())
 
     def register(self, fileObj, mask, callback):
         """
@@ -140,3 +148,11 @@ class _VSocketServerThread(threading.Thread):
         """
         self.__selector.register(fileObj, mask, callback)
         self.__registered = True
+
+    def remove(self,fileobj):
+        """
+        移除socket
+        :param fileobj:
+        :return:
+        """
+        self.__selector.unregister(fileobj)

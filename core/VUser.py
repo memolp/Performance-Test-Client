@@ -4,12 +4,14 @@
  压测用户
 """
 
+import traceback
+
 from core.Packet import Packet
 from core.VSocketMgr import VSocketMgr
 from core.VTranslation import VTranslation
 
 
-class VUser:
+class VUser(object):
     """
     VUser 压测用户，无需业务层创建，底层创建后会将对象传递给业务层使用
     """
@@ -29,13 +31,14 @@ class VUser:
         self.__socks = {}
         self.__states = {}
         self.__currentState = None
+        self.__stateCallArgs = []
         self.__toState = None
         # 同一个事务可能存在多个统计，需要字典中用列表标识
         self.__translationList = {}
         self.__sendPacketIdx = 0
         self.__recvPacketIdx = 0
         self.__tickCalback = None
-        self.__finishTranslation = []
+        self.__finishTranslation = {}
         # [底层的]缓存未读取完的数据包
         self.__cachePacketData = Packet()
 
@@ -80,7 +83,7 @@ class VUser:
         """
         self.__currentState = state
 
-    def SwitchState(self, state):
+    def SwitchState(self, state, *args):
         """
         状态状态，会生成一个回调，在合适的时机调用回调
         :param state:
@@ -96,6 +99,7 @@ class VUser:
         if state == self.__toState:
             return
         self.__toState = state
+        self.__stateCallArgs = args
 
     def GetStateCallback(self):
         """
@@ -112,6 +116,13 @@ class VUser:
         self.__currentState = self.__toState
         # 返回状态回调函数
         return self.__states[self.__toState]
+
+    def GetStateCallbackArgs(self):
+        """
+        获取状态改变回调的传入参数
+        :return:
+        """
+        return self.__stateCallArgs
 
     def GetTickCallback(self):
         """
@@ -173,12 +184,22 @@ class VUser:
         if mname not in self.__translationList:
             raise KeyError("translation name :{0} is not exist!".format(mname))
         # 移除第一个事务标记完成
-        translation = self.__translationList[mname].pop(0)
-        translation.Finish()
-        # 添加进完成事务列表
-        self.__finishTranslation.append(translation)
+        if len(self.__translationList[mname]) > 0:
+            translation = self.__translationList[mname].pop(0)
+            translation.Finish()
+            # 添加进完成事务列表
+            if mname not in self.__finishTranslation:
+                self.__finishTranslation[mname] = []
+            self.__finishTranslation[mname].append(translation)
 
-    def Connect(self, host, port, sockid=0, socktype=0):
+    def GetTranslationInfo(self):
+        """
+        获取事务信息
+        :return: 进行中事务列表，已完成事务列表
+        """
+        return self.__translationList, self.__finishTranslation
+
+    def Connect(self, host, port, sockid, socktype=0):
         """
         链接至指定的服务器地址，socket会存储到对应的sockid上
         :param host:
@@ -194,6 +215,20 @@ class VUser:
         packet.writeUTFBytes(host)
         packet.writeUnsignedShort(port)
         self.__SendPacket(packet, sockid, self.MSG_CONNECT)
+
+    def Disconnect(self, sockid):
+        """
+        主动断开链接
+        :param sockid:
+        :return:
+        """
+        if sockid not in self.__socks:
+            raise KeyError("sockid :{0} is not exist!".format(sockid))
+        packet = self.CreatePacket()
+        self.__SendPacket(packet, sockid, self.MSG_DISCONNECT)
+        self.__socks[sockid].Close()
+        del self.__socks[sockid]
+
 
     def __SendPacket(self, packet, sockid , msgid):
         """
@@ -233,7 +268,7 @@ class VUser:
         del sendPacket
 
 
-    def Send(self, packet, sockid=0):
+    def Send(self, packet, sockid):
         """
         向某个socketid 发送协议数据，如何socketid 不存在，会抛异常
         :param packet:
@@ -294,7 +329,10 @@ class VUser:
                 VSocketMgr.GetInstance().OnDisconnect(self,sockid)
             elif msgID == self.MSG_PACKET:
                 rdata = self.__cachePacketData.readUTFBytes(pack_len - (4 + 4 + 2 + 4))
-                VSocketMgr.GetInstance().OnMessage(self, sockid, Packet(rdata))
+                try:
+                    VSocketMgr.GetInstance().OnMessage(self, sockid, Packet(rdata))
+                except Exception as e:
+                    print(traceback.format_exc())
                 remaining = length - self.__cachePacketData.position
                 if remaining <= 0:
                     self.__cachePacketData.clear()

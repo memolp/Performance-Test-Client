@@ -143,6 +143,14 @@ class Packet(Endian):
         fmt = "%ss" % (len(value))
         self._addbuf(struct.pack(fmt, value))
 
+    def writeMulitBytes(self, value):
+        """"""
+        if isinstance(value,str):
+            value = value.encode()
+        elif isinstance(value, Packet):
+            value = value.getvalue()
+        self._addbuf(value)
+
     def writeString(self, value):
         """"""
         nlen = len(value)
@@ -184,7 +192,8 @@ class Packet(Endian):
     def reset(self,data):
         """"""
         self.clear()
-        self.writeUTFBytes(data)
+        self.writeMulitBytes(data)
+        self.position = 0
 
     def _addbuf(self, value):
         """ """
