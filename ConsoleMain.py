@@ -21,6 +21,7 @@ def Main():
     parse.add_argument("-port", help="PTC Server port", type=int)
     parse.add_argument("-user", help="User Count", type=int)
     parse.add_argument("-tps", help="translation per second", type=int)
+    parse.add_argument("-times", help="run test times", type=int, default=-1)
     parse.add_argument("-script", help="script file abspath", type=int)
     parse.add_argument("-thread", help="thread of network num", type=int, default=4)
     parse.add_argument("-platform", help="platform system win or linux", type=str, default="win")
@@ -29,6 +30,7 @@ def Main():
     VSocketMgr.WIN_MAX_THREAD_NUM = argument.NUM
     VSocketMgr.PTC_HOST = argument.host
     VSocketMgr.PTC_PORT = argument.port
+    VUserMgr.RUN_TEST_TIMES = argument.times
 
     module = Loader.LoadModule(argument.script)
     if module is None:
@@ -47,6 +49,7 @@ def LocalTest():
     VSocketMgr.WIN_MAX_THREAD_NUM = 4
     VSocketMgr.PTC_HOST = "127.0.0.1"
     VSocketMgr.PTC_PORT = 7090
+    VUserMgr.RUN_TEST_TIMES = 50
 
     module = Loader.LoadModule("./script/test.py")
     if module is None:
@@ -54,7 +57,7 @@ def LocalTest():
     # 网络线程组启动
     VSocketMgr.GetInstance().CreateServer(module, "win")
     # 用户管理启动
-    VUserMgr.GetInstance().CreateVUser(module, 20, 20)
+    VUserMgr.GetInstance().CreateVUser(module, 1, 1)
     VUserMgr.GetInstance().Start()
 
 if __name__ == "__main__":

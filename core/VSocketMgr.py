@@ -8,7 +8,7 @@ import time
 import random
 import selectors
 import threading
-import traceback
+import core.VLog as VLog
 
 
 from core.VSocket import VSocket
@@ -94,7 +94,7 @@ class VSocketMgr:
         try:
             self.__script.OnMessage(vuser, sockid, data)
         except Exception as e:
-            print(traceback.format_exc())
+            VLog.Trace(e)
 
     # 网络链接断开
     def OnDisconnect(self, vuser, sockid):
@@ -107,7 +107,7 @@ class VSocketMgr:
         try:
             self.__script.OnDisconnect(vuser, sockid)
         except Exception as e:
-            print(traceback.format_exc())
+            VLog.Trace(e)
 
 class _VSocketServerThread(threading.Thread):
     """
@@ -126,17 +126,17 @@ class _VSocketServerThread(threading.Thread):
                 time.sleep(1.0)
                 continue
             try:
-                events = self.__selector.select()
+                events = self.__selector.select(0.1)
             except Exception as e:
                 time.sleep(1.0)
-                print(traceback.format_exc())
+                VLog.Trace(e)
                 continue
             for key, mask in events:
                 func = key.data
                 try:
                     func()
                 except Exception as e:
-                    print(traceback.format_exc())
+                    VLog.Trace(e)
 
     def register(self, fileObj, mask, callback):
         """

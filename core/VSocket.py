@@ -5,7 +5,8 @@
 """
 
 import socket
-import traceback
+import core.VLog as VLog
+
 
 class VSocket:
     """
@@ -44,13 +45,13 @@ class VSocket:
         try:
             data, address = self.__sock.recvfrom(self.__maxbufszie)
         except Exception as e:
-            print(traceback.format_exc())
+            VLog.Trace(e)
             self.Close()
             return
         try:
             self.__vuser.OnReceive(self.__sockid,data)
         except Exception as e:
-            print(traceback.format_exc())
+            VLog.Trace(e)
 
     def OnSend(self, buff):
         """
@@ -61,7 +62,7 @@ class VSocket:
         try:
             self.__sock.sendto(buff,(self.__server,self.__port))
         except Exception as e:
-            print(traceback.format_exc())
+            VLog.Trace(e)
 
     def GetFD(self):
         """

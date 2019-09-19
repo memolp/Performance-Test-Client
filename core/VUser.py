@@ -4,7 +4,8 @@
  压测用户
 """
 
-import traceback
+import core.VLog as VLog
+import core.VUtils as VUtils
 
 from core.Packet import Packet
 from core.VSocketMgr import VSocketMgr
@@ -31,6 +32,7 @@ class VUser(object):
         self.__socks = {}
         self.__states = {}
         self.__currentState = None
+        self.__useBusy = False
         self.__stateCallArgs = []
         self.__toState = None
         # 同一个事务可能存在多个统计，需要字典中用列表标识
@@ -65,6 +67,14 @@ class VUser(object):
         :return:
         """
         return self.__uid
+
+    def GetHashCode(self,value):
+        """
+        获取value的hashcode
+        :param value:
+        :return:
+        """
+        return abs(VUtils.GetHashCode(value))
 
     def BindState(self, state, callback):
         """
@@ -159,9 +169,19 @@ class VUser(object):
         返回任务是否完成
         :return:
         """
+        if self.__useBusy:
+            return False
         if self.__task is None:
             return True
         return self.__task.done()
+
+    def SetBusy(self, bool):
+        """
+        这是用户繁忙状态
+        :param bool:
+        :return:
+        """
+        self.__useBusy = bool
 
     def StartTranslation(self, mname):
         """
@@ -208,6 +228,10 @@ class VUser(object):
         :param socktype: 创建链接的sock的类型 0 TCP 1 UDP
         :return:
         """
+        # 先清除数据，这个也是坑
+        self.__cachePacketData.clear()
+        self.__sendPacketIdx = 0
+        self.__recvPacketIdx = 0
         self.__socks[sockid] = VSocketMgr.GetInstance().CreateVSocket(self, sockid)
         packet = self.CreatePacket()
         packet.writeUnsignedByte(socktype)
@@ -216,16 +240,19 @@ class VUser(object):
         packet.writeUnsignedShort(port)
         self.__SendPacket(packet, sockid, self.MSG_CONNECT)
 
-    def Disconnect(self, sockid):
+    def Disconnect(self, sockid, broadcast=False):
         """
         主动断开链接
         :param sockid:
+        :param broadcast: 是否通知服务器
         :return:
         """
         if sockid not in self.__socks:
             raise KeyError("sockid :{0} is not exist!".format(sockid))
-        packet = self.CreatePacket()
-        self.__SendPacket(packet, sockid, self.MSG_DISCONNECT)
+        # 默认不通知服务器
+        if broadcast:
+            packet = self.CreatePacket()
+            self.__SendPacket(packet, sockid, self.MSG_DISCONNECT)
         self.__socks[sockid].Close()
         del self.__socks[sockid]
 
@@ -295,7 +322,7 @@ class VUser(object):
         :return:
         """
         # 这里为什么会走VSocketMgr 主要是希望可以明确 这个返回是来自网络线程
-        self.__cachePacketData.writeUTFBytes(data)
+        self.__cachePacketData.writeMulitBytes(data)
         self.__cachePacketData.position = 0
         length = self.__cachePacketData.length()
         # 这里的分包只是分底层组装的包，具体服务器返回的协议内容有没有完整，需要OnMessage中自己判断
@@ -318,7 +345,7 @@ class VUser(object):
             # 协议序号错了
             if self.__recvPacketIdx + 1 != idx:
                 self.__cachePacketData.clear()
-                print("recv pack idx error!!!!!local:{0},server:{1}".format(self.__recvPacketIdx+1,idx))
+                VLog.Error("recv pack idx error!!!!!local:{0},server:{1}", self.__recvPacketIdx+1, idx)
                 break
             self.__recvPacketIdx += 1
 
@@ -332,7 +359,7 @@ class VUser(object):
                 try:
                     VSocketMgr.GetInstance().OnMessage(self, sockid, Packet(rdata))
                 except Exception as e:
-                    print(traceback.format_exc())
+                    VLog.Trace(e)
                 remaining = length - self.__cachePacketData.position
                 if remaining <= 0:
                     self.__cachePacketData.clear()
@@ -342,7 +369,7 @@ class VUser(object):
                 length = self.__cachePacketData.length()
             else:
                 self.__cachePacketData.clear()
-                print("recv pack msgID error!!!!!:"+msgID)
+                VLog.Error("Recv Pack MsgID: {0} error!!!!!", msgID)
                 break
 
     def OnClose(self, sockid):

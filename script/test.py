@@ -16,7 +16,7 @@ def OnMessage(vuser, sockid, packet):
 def OnConcurrence(vuser, count):
     #print("OnConcurrence")
     if vuser.GetData("init") is None:
-        vuser.Connect("127.0.0.1", 7091, 0)
+        vuser.Connect("127.0.0.1", 7091, 0, 1)
         #vuser.Connect("14.215.177.39",80,0)
         vuser.SetData("init",1)
     else:
@@ -27,5 +27,6 @@ def OnConcurrence(vuser, count):
 
 # 网络链接断开
 def OnDisconnect(vuser, sockid):
-    print("OnDisconnect")
-    vuser.Disconnect(sockid)
+    print("OnDisconnect",sockid,vuser.GetUID())
+    #vuser.Disconnect(sockid)
+    vuser.SetData("init", None)
