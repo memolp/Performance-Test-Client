@@ -22,6 +22,8 @@ class VSocket:
         """
         # 创建一个udp套接字
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.__sock.setsockopt(socket.SOL_SOCKET,socket.SO_SNDBUF,maxbufszie)
+        self.__sock.setsockopt(socket.SOL_SOCKET,socket.SO_RCVBUF,maxbufszie)
         self.__vuser = vuser
         self.__server = host
         self.__port  = port

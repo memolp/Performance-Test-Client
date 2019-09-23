@@ -23,10 +23,12 @@ def avg(iter, key=None):
     return total_v / nlen
 
 def __convert_n_bytes(n, b):
+    """"""
     bits = b*8
     return (n + 2**(bits-1)) % 2**bits - 2**(bits-1)
 
 def __convert_4_bytes(n):
+    """"""
     return __convert_n_bytes(n, 4)
 
 def GetHashCode(s):

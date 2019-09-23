@@ -111,7 +111,7 @@ class VUserMgr:
                     # 间隔执行
                     callback = vuser.GetTickCallback()
                     if callback is not None:
-                        callback(vuser)
+                        callback(vuser, start_time)
                 except Exception as e:
                     VLog.Trace(e)
 

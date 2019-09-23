@@ -32,7 +32,7 @@ class VUser(object):
         self.__socks = {}
         self.__states = {}
         self.__currentState = None
-        self.__useBusy = False
+        self.__useBusy = True
         self.__stateCallArgs = []
         self.__toState = None
         # 同一个事务可能存在多个统计，需要字典中用列表标识
@@ -103,7 +103,7 @@ class VUser(object):
             raise KeyError("state :{0} is not exist!".format(state))
         # 状态在当前状态，不触发回调
         if state == self.__currentState:
-            print("warning switchstate is in current state!")
+            VLog.Info("warning switchstate is in current state :{0} !",state)
             return
         # 如果状态已经是目标状态，则不执行
         if state == self.__toState:
@@ -248,7 +248,8 @@ class VUser(object):
         :return:
         """
         if sockid not in self.__socks:
-            raise KeyError("sockid :{0} is not exist!".format(sockid))
+            VLog.Error("sockid :{0} is not exist!".format(sockid))
+            return
         # 默认不通知服务器
         if broadcast:
             packet = self.CreatePacket()
@@ -322,6 +323,7 @@ class VUser(object):
         :return:
         """
         # 这里为什么会走VSocketMgr 主要是希望可以明确 这个返回是来自网络线程
+        self.__cachePacketData.position = self.__cachePacketData.length()
         self.__cachePacketData.writeMulitBytes(data)
         self.__cachePacketData.position = 0
         length = self.__cachePacketData.length()
@@ -333,13 +335,13 @@ class VUser(object):
             # 开始标记不对
             if self.__cachePacketData.readUnsignedByte() != 0xEF:
                 self.__cachePacketData.clear()
+                VLog.Error("Recv Packet Head ERROR! uid:{0} sockid:{1}",self.__uid,sockid)
                 break
             pack_len = self.__cachePacketData.readUnsignedInt()
             # 协议长度不足
             if length - self.__cachePacketData.position < pack_len:
                 self.__cachePacketData.position = length
                 break
-
             uid = self.__cachePacketData.readUnsignedInt()
             idx = self.__cachePacketData.readUnsignedInt()
             # 协议序号错了
@@ -353,9 +355,9 @@ class VUser(object):
             sockid = self.__cachePacketData.readUnsignedInt()
 
             if msgID == self.MSG_DISCONNECT:
-                VSocketMgr.GetInstance().OnDisconnect(self,sockid)
+                self.OnClose(sockid)
             elif msgID == self.MSG_PACKET:
-                rdata = self.__cachePacketData.readUTFBytes(pack_len - (4 + 4 + 2 + 4))
+                rdata = self.__cachePacketData.readMulitBytes(pack_len - (4 + 4 + 2 + 4))
                 try:
                     VSocketMgr.GetInstance().OnMessage(self, sockid, Packet(rdata))
                 except Exception as e:
@@ -364,7 +366,7 @@ class VUser(object):
                 if remaining <= 0:
                     self.__cachePacketData.clear()
                 else:
-                    cdata = self.__cachePacketData.readUTFBytes(remaining)
+                    cdata = self.__cachePacketData.readMulitBytes(remaining)
                     self.__cachePacketData.reset(data)
                 length = self.__cachePacketData.length()
             else:
@@ -378,4 +380,5 @@ class VUser(object):
         :param sockid:
         :return:
         """
-        VSocketMgr.OnDisconnect(self, sockid)
+        VSocketMgr.GetInstance().OnDisconnect(self, sockid)
+        self.Disconnect(sockid,False)

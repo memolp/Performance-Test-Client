@@ -87,6 +87,10 @@ class Packet(Endian):
         res = struct.unpack(fmt, self._readbuf(nlen))
         return res[0]
 
+    def readMulitBytes(self,nlen):
+        """"""
+        return self._readbuf(nlen)
+
     def readString(self):
         """ """
         nlen = self.readUnsignedShort()

@@ -126,7 +126,7 @@ class _VSocketServerThread(threading.Thread):
                 time.sleep(1.0)
                 continue
             try:
-                events = self.__selector.select(0.1)
+                events = self.__selector.select(0.001)
             except Exception as e:
                 time.sleep(1.0)
                 VLog.Trace(e)
