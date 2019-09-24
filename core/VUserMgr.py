@@ -7,6 +7,7 @@
 import time
 import threading
 import core.VLog as VLog
+import core.VUtils as VUtils
 
 from concurrent.futures import ThreadPoolExecutor
 from core.VUser import VUser
@@ -39,6 +40,7 @@ class VUserMgr:
         self.__tps = 0
         self.__threadExecutor = None
         self.__index = 0
+        self.__random = VUtils.Random()
 
     def CreateVUser(self, script, count, tps):
         """
@@ -59,10 +61,6 @@ class VUserMgr:
 
         # 根据并发创建对应数量的线程池
         self.__threadExecutor = ThreadPoolExecutor(self.__tps)
-
-        # 调用初始化
-        for user in self.__vuserList:
-            self.OnInit(user)
 
     def CulTranslation(self,vuser, transaltion_info):
         """
@@ -90,7 +88,7 @@ class VUserMgr:
         return transaltion_info
 
     # 事务统计打印的格式
-    TRANSLATION_INFO = "{0}|in:{1}|ed:{2}|max:{3} ms|avg:{4} ms|{5}%"
+    TRANSLATION_INFO = "[PTC] {0}|in:{1}|ed:{2}|max:{3} ms|avg:{4} ms|{5}%"
 
     def TickerThread(self):
         """
@@ -132,27 +130,63 @@ class VUserMgr:
             if cost_time < 1.0:
                 time.sleep(1.0 - cost_time)
             else:
-                VLog.Error("TickerThread function cost_time :{0}!!!!!!!!",cost_time)
+                VLog.Error("[PTC] TickerThread function cost_time :{0}!!!!!!!!",cost_time)
 
-    def Start(self):
+    def _start_tick_thread(self):
         """
-        启动
+        启动定时器线程
         :return:
         """
-
-
         # 定时线程启动
-        stateThread = threading.Thread(target=self.TickerThread, args=())
-        stateThread.start()
+        p_thread = threading.Thread(target=self.TickerThread, args=())
+        p_thread.start()
 
+    def _wait_client_initCompleted(self, percent=1.0):
+        """
+        等待客户端初始化完成
+        :param percent: 初始化完成的客户端占比
+        :return:
+        """
+        VLog.Info("[PTC] Wait Client Init Completed ......")
+        size = len(self.__vuserList)
+        while True:
+            count = 0
+            for vuser in self.__vuserList:
+                if vuser.GetInitCompleted():
+                    count += 1
+            VLog.Info("[PTC] Init Completed Client Count:{0}",count)
+            if count/size >= percent:
+                break
+            else:
+                time.sleep(1.0)
+        VLog.Info("[PTC] Wait Client Init Completed ......end")
+
+    def Start(self, delay=0.0):
+        """
+        启动
+        :param delay:
+        :return:
+        """
+        # 启动定时器线程
+        self._start_tick_thread()
+        # 调用初始化
+        for users in self.__random.taker(self.__vuserList, self.__tps):
+            for user in users:
+                self.OnInit(user)
+            if delay > 0:
+                time.sleep(delay)
+        # 等待客户端初始化完成
+        self._wait_client_initCompleted(0.9)
         # 主循环
         round_count = 0
         while self.RUN_TEST_TIMES == -1 or (round_count < self.RUN_TEST_TIMES):
             start_time = time.time()
-            users = self._GetVUser(self.__tps)
+            users = self.__random.poll(self.__vuserList, self.__tps, lambda x:x.TaskFinish())
+            if len(users) < self.__tps:
+                VLog.Info("[PTC] Concurrence TPS :{0} ,expect:{1}", len(users), self.__tps)
             # 执行任务
             for vuser in users:
-                task = self.__threadExecutor.submit(self.OnConcurrence,vuser, round_count)
+                task = self.__threadExecutor.submit(self.OnConcurrence, vuser, round_count)
                 vuser.SetTask(task)
             # 每执行一轮，+1
             round_count += 1
@@ -162,34 +196,7 @@ class VUserMgr:
             if cost_time < 1.0:
                 time.sleep(1.0 - cost_time)
             else:
-                VLog.Error("Start function cost_time :{0}!!!!!!!!",cost_time)
-
-    def _GetVUser(self, num):
-        """
-        获取user执行任务
-        :param num:
-        :return:
-        """
-        users = []
-        # 从当前位置获取user，满足数量则返回
-        for i in range(self.__index, len(self.__vuserList)):
-            vuser = self.__vuserList[i]
-            if vuser.TaskFinish():
-                users.append(vuser)
-            if len(users) >= num:
-                self.__index += num
-                return users
-        # 从头开始获取，满足数量返回
-        for i in range(0, self.__index):
-            vuser = self.__vuserList[i]
-            if vuser.TaskFinish():
-                users.append(vuser)
-            if len(users) >= num:
-                self.__index = i
-                return users
-        # 不满足也返回
-        return users
-
+                VLog.Error("[PTC] Start function cost_time :{0}!!!!!!!!",cost_time)
 
 
     def OnInit(self, vuser):

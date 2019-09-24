@@ -57,7 +57,7 @@ def LocalTest():
     # 网络线程组启动
     VSocketMgr.GetInstance().CreateServer(module, "win")
     # 用户管理启动
-    VUserMgr.GetInstance().CreateVUser(module, 1, 1)
+    VUserMgr.GetInstance().CreateVUser(module, 10, 2)
     VUserMgr.GetInstance().Start()
 
 if __name__ == "__main__":

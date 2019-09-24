@@ -4,19 +4,22 @@
 def OnInit(vuser):
     #print("OnInit")
     pass
+    vuser.SetInitCompleted(True)
+    vuser.SetBusy(False)
 
 
 # 收到协议调用 (packet需要手动分包)
 def OnMessage(vuser, sockid, packet):
     #print("OnMessage",packet)
     vuser.EndTranslation("A")
+    print(packet.getvalue())
 
 
 # 并发执行调用(count未执行的次数)
 def OnConcurrence(vuser, count):
     #print("OnConcurrence")
     if vuser.GetData("init") is None:
-        vuser.Connect("127.0.0.1", 7091, 0, 1)
+        vuser.Connect("127.0.0.1", 7091, 0, 0)
         #vuser.Connect("14.215.177.39",80,0)
         vuser.SetData("init",1)
     else:

@@ -5,10 +5,10 @@ socket 管理器
 """
 
 import time
-import random
 import selectors
 import threading
 import core.VLog as VLog
+import core.VUtils as VUtils
 
 
 from core.VSocket import VSocket
@@ -37,6 +37,7 @@ class VSocketMgr:
         """"""
         self.__serverList = []
         self.__script = None
+        self.__random = VUtils.Random()
 
     def CreateServer(self,script, platform="win"):
         """
@@ -76,7 +77,7 @@ class VSocketMgr:
         :return:
         """
         # 随机采样一个server 后面改为轮训方式吧-主要是针对win
-        sockserver = random.sample(self.__serverList,1)
+        sockserver = self.__random.poll(self.__serverList, 1)
         if not sockserver:
             return
         # 注册

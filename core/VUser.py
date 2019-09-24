@@ -3,7 +3,7 @@
 """
  压测用户
 """
-
+import time
 import core.VLog as VLog
 import core.VUtils as VUtils
 
@@ -32,13 +32,14 @@ class VUser(object):
         self.__socks = {}
         self.__states = {}
         self.__currentState = None
+        self.__initCompleted = False
         self.__useBusy = True
         self.__stateCallArgs = []
         self.__toState = None
         # 同一个事务可能存在多个统计，需要字典中用列表标识
         self.__translationList = {}
-        self.__sendPacketIdx = 0
-        self.__recvPacketIdx = 0
+        # 缓存发送的序列号 按照sockid存储，互不影响
+        self.__cachePacketIndex = {}
         self.__tickCalback = None
         self.__finishTranslation = {}
         # [底层的]缓存未读取完的数据包
@@ -76,6 +77,21 @@ class VUser(object):
         """
         return abs(VUtils.GetHashCode(value))
 
+    def GetInitCompleted(self):
+        """
+        返回初始化完成
+        :return:
+        """
+        return self.__initCompleted
+
+    def SetInitCompleted(self, value):
+        """
+        设置初始化完成标记
+        :param value:
+        :return:
+        """
+        self.__initCompleted = value
+
     def BindState(self, state, callback):
         """
         绑定一个状态事件，当状态改变时会调用回调方法
@@ -100,10 +116,11 @@ class VUser(object):
         :return:
         """
         if state not in self.__states:
-            raise KeyError("state :{0} is not exist!".format(state))
+            VLog.Error("[PTC] state :{0} is not exist! uid:{1}", state, self.__uid)
+            return
         # 状态在当前状态，不触发回调
         if state == self.__currentState:
-            VLog.Info("warning switchstate is in current state :{0} !",state)
+            VLog.Info("[PTC] warning switchstate is in current state :{0} uid: {1}!", state, self.__uid)
             return
         # 如果状态已经是目标状态，则不执行
         if state == self.__toState:
@@ -202,7 +219,8 @@ class VUser(object):
         :return:
         """
         if mname not in self.__translationList:
-            raise KeyError("translation name :{0} is not exist!".format(mname))
+            VLog.Error("[PTC] uid:{0} translation name :{1} is not exist!", self.__uid, mname)
+            return
         # 移除第一个事务标记完成
         if len(self.__translationList[mname]) > 0:
             translation = self.__translationList[mname].pop(0)
@@ -230,8 +248,7 @@ class VUser(object):
         """
         # 先清除数据，这个也是坑
         self.__cachePacketData.clear()
-        self.__sendPacketIdx = 0
-        self.__recvPacketIdx = 0
+        self.__cachePacketIndex[sockid] = {"SendIdx": 0, "ReceiveIdx": 0}
         self.__socks[sockid] = VSocketMgr.GetInstance().CreateVSocket(self, sockid)
         packet = self.CreatePacket()
         packet.writeUnsignedByte(socktype)
@@ -248,7 +265,7 @@ class VUser(object):
         :return:
         """
         if sockid not in self.__socks:
-            VLog.Error("sockid :{0} is not exist!".format(sockid))
+            VLog.Error("[PTC] uid:{0} sockid :{1} is not exist!", self.__uid, sockid)
             return
         # 默认不通知服务器
         if broadcast:
@@ -267,7 +284,8 @@ class VUser(object):
         :return:
         """
         if sockid not in self.__socks:
-            raise KeyError("sockid :{0} is not exist!".format(sockid))
+            VLog.Error("[PTC] uid:{0} sockid :{1} is not exist!", self.__uid, sockid)
+            return
         # 发送的数据需要再重新包装
         sendPacket = Packet()
         # 起始标记
@@ -277,8 +295,9 @@ class VUser(object):
         # 用户vuer
         sendPacket.writeUnsignedInt(self.__uid)
         # 发送的序列号
-        sendPacket.writeUnsignedInt(self.__sendPacketIdx)
-        self.__sendPacketIdx += 1
+        index = self.__cachePacketIndex[sockid]["SendIdx"]
+        sendPacket.writeUnsignedInt(index)
+        self.__cachePacketIndex[sockid]["SendIdx"] += 1
         # 消息ID
         sendPacket.writeUnsignedShort(msgid)
         # sockid
@@ -304,7 +323,8 @@ class VUser(object):
         :return:
         """
         if sockid not in self.__socks:
-            raise KeyError("sockid :{0} is not exist!".format(sockid))
+            VLog.Error("[PTC] uid:{0} sockid :{1} is not exist!", self.__uid, sockid)
+            return
         # 发送数据
         self.__SendPacket(packet,sockid,self.MSG_PACKET)
 
@@ -322,6 +342,7 @@ class VUser(object):
         :param data:
         :return:
         """
+        begin_time = time.time() * 1000
         # 这里为什么会走VSocketMgr 主要是希望可以明确 这个返回是来自网络线程
         self.__cachePacketData.position = self.__cachePacketData.length()
         self.__cachePacketData.writeMulitBytes(data)
@@ -333,9 +354,10 @@ class VUser(object):
             if length - self.__cachePacketData.position < 19:
                 break
             # 开始标记不对
-            if self.__cachePacketData.readUnsignedByte() != 0xEF:
+            head_flag = self.__cachePacketData.readUnsignedByte() & 0xFF
+            if head_flag != 0xEF:
                 self.__cachePacketData.clear()
-                VLog.Error("Recv Packet Head ERROR! uid:{0} sockid:{1}",self.__uid,sockid)
+                VLog.Error("[PTC] Recv Packet Head ERROR! uid:{0} sockid:{1} flag:{2}", self.__uid, sockid, head_flag)
                 break
             pack_len = self.__cachePacketData.readUnsignedInt()
             # 协议长度不足
@@ -344,12 +366,13 @@ class VUser(object):
                 break
             uid = self.__cachePacketData.readUnsignedInt()
             idx = self.__cachePacketData.readUnsignedInt()
+            rindex = self.__cachePacketIndex[sockid]["ReceiveIdx"]
             # 协议序号错了
-            if self.__recvPacketIdx + 1 != idx:
+            if rindex + 1 != idx:
                 self.__cachePacketData.clear()
-                VLog.Error("recv pack idx error!!!!!local:{0},server:{1}", self.__recvPacketIdx+1, idx)
+                VLog.Error("[PTC] Recv Packet Index ERROR!!!!! uid:{0} local:{1},server:{2}", self.__uid, rindex+1, idx)
                 break
-            self.__recvPacketIdx += 1
+            self.__cachePacketIndex[sockid]["ReceiveIdx"] += 1
 
             msgID = self.__cachePacketData.readUnsignedShort()
             sockid = self.__cachePacketData.readUnsignedInt()
@@ -371,8 +394,11 @@ class VUser(object):
                 length = self.__cachePacketData.length()
             else:
                 self.__cachePacketData.clear()
-                VLog.Error("Recv Pack MsgID: {0} error!!!!!", msgID)
+                VLog.Error("[PTC] Recv Pack MsgID: {0} error!!!!! uid:{1}", msgID, self.__uid)
                 break
+        cost_time = time.time() * 1000 - begin_time
+        if cost_time > 20:
+            VLog.Info("[PTC] OnReceice Cost Time:{0}ms UID:{1} sockID:{2}", cost_time, self.__uid, sockid)
 
     def OnClose(self, sockid):
         """
@@ -380,5 +406,6 @@ class VUser(object):
         :param sockid:
         :return:
         """
+        VLog.Info("[PTC] Server Closed the socket uid:{0} , sockID:{1}", self.__uid, sockid)
         VSocketMgr.GetInstance().OnDisconnect(self, sockid)
-        self.Disconnect(sockid,False)
+        self.Disconnect(sockid, False)
