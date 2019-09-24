@@ -46,10 +46,10 @@ def LocalTest():
     本地测试代码
     :return:
     """
-    VSocketMgr.WIN_MAX_THREAD_NUM = 4
+    VSocketMgr.WIN_MAX_THREAD_NUM = 20
     VSocketMgr.PTC_HOST = "127.0.0.1"
     VSocketMgr.PTC_PORT = 7090
-    VUserMgr.RUN_TEST_TIMES = 50
+    VUserMgr.RUN_TEST_TIMES = 300
 
     module = Loader.LoadModule("./script/test.py")
     if module is None:
@@ -57,8 +57,8 @@ def LocalTest():
     # 网络线程组启动
     VSocketMgr.GetInstance().CreateServer(module, "win")
     # 用户管理启动
-    VUserMgr.GetInstance().CreateVUser(module, 10, 2)
-    VUserMgr.GetInstance().Start()
+    VUserMgr.GetInstance().CreateVUser(module, 10000, 1000)
+    VUserMgr.GetInstance().Start(1)
 
 if __name__ == "__main__":
     LocalTest()

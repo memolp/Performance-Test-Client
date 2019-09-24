@@ -22,5 +22,9 @@ def OnConcurrence(vuser, count):
 def OnDisconnect(vuser, sockid):
     # 网络链接断开
     pass
+    
+def OnConnected(vuser,sockid):
+    # 网络连接完成
+    pass
 
 """

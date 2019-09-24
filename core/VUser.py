@@ -368,7 +368,7 @@ class VUser(object):
             idx = self.__cachePacketData.readUnsignedInt()
             rindex = self.__cachePacketIndex[sockid]["ReceiveIdx"]
             # 协议序号错了
-            if rindex + 1 != idx:
+            if rindex+1 != idx:
                 self.__cachePacketData.clear()
                 VLog.Error("[PTC] Recv Packet Index ERROR!!!!! uid:{0} local:{1},server:{2}", self.__uid, rindex+1, idx)
                 break
@@ -376,7 +376,6 @@ class VUser(object):
 
             msgID = self.__cachePacketData.readUnsignedShort()
             sockid = self.__cachePacketData.readUnsignedInt()
-
             if msgID == self.MSG_DISCONNECT:
                 self.OnClose(sockid)
             elif msgID == self.MSG_PACKET:
@@ -385,17 +384,17 @@ class VUser(object):
                     VSocketMgr.GetInstance().OnMessage(self, sockid, Packet(rdata))
                 except Exception as e:
                     VLog.Trace(e)
-                remaining = length - self.__cachePacketData.position
-                if remaining <= 0:
-                    self.__cachePacketData.clear()
-                else:
-                    cdata = self.__cachePacketData.readMulitBytes(remaining)
-                    self.__cachePacketData.reset(data)
-                length = self.__cachePacketData.length()
+            elif msgID == self.MSG_CONNECT:
+                VSocketMgr.GetInstance().OnConnected(self,sockid)
             else:
-                self.__cachePacketData.clear()
                 VLog.Error("[PTC] Recv Pack MsgID: {0} error!!!!! uid:{1}", msgID, self.__uid)
-                break
+            remaining = length - self.__cachePacketData.position
+            if remaining <= 0:
+                self.__cachePacketData.clear()
+            else:
+                cdata = self.__cachePacketData.readMulitBytes(remaining)
+                self.__cachePacketData.reset(data)
+            length = self.__cachePacketData.length()
         cost_time = time.time() * 1000 - begin_time
         if cost_time > 20:
             VLog.Info("[PTC] OnReceice Cost Time:{0}ms UID:{1} sockID:{2}", cost_time, self.__uid, sockid)

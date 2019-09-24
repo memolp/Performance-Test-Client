@@ -60,7 +60,7 @@ class VUserMgr:
             self.__vuserList.append(user)
 
         # 根据并发创建对应数量的线程池
-        self.__threadExecutor = ThreadPoolExecutor(self.__tps)
+        self.__threadExecutor = ThreadPoolExecutor(self.__tps*2)
 
     def CulTranslation(self,vuser, transaltion_info):
         """
@@ -188,6 +188,7 @@ class VUserMgr:
             for vuser in users:
                 task = self.__threadExecutor.submit(self.OnConcurrence, vuser, round_count)
                 vuser.SetTask(task)
+
             # 每执行一轮，+1
             round_count += 1
 

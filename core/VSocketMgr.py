@@ -84,6 +84,18 @@ class VSocketMgr:
         sock.SetSocketServer(sockserver[0])
         sockserver[0].register(sock.GetFD(), selectors.EVENT_READ, sock.OnReceive)
 
+    def OnConnected(self, vuser, sockid):
+        """
+        连接成功
+        :param vuser:
+        :param sockid:
+        :return:
+        """
+        try:
+            self.__script.OnConnected(vuser, sockid)
+        except Exception as e:
+            VLog.Trace(e)
+
     def OnMessage(self, vuser, sockid, data):
         """
         某个user网络协议返回
@@ -129,6 +141,7 @@ class _VSocketServerThread(threading.Thread):
             try:
                 events = self.__selector.select(0.001)
             except Exception as e:
+                print('socks:::::', len(self.__selector._readers))
                 time.sleep(1.0)
                 VLog.Trace(e)
                 continue
