@@ -4,12 +4,13 @@
  压测用户
 """
 import time
-import core.VLog as VLog
-import core.VUtils as VUtils
+import core.utils.VLog as VLog
+import core.utils.VUtils as VUtils
 
-from core.Packet import Packet
-from core.VSocketMgr import VSocketMgr
-from core.VTranslation import VTranslation
+from core.utils.Packet import Packet
+from core.net.VSocketMgr import VSocketMgr
+from core.utils.VTranslation import VTranslation
+from core.vuser.VUserScene import VUserScene
 
 
 class VUser(object):
@@ -19,17 +20,21 @@ class VUser(object):
     MSG_CONNECT = 1000
     MSG_DISCONNECT = 1001
     MSG_PACKET = 2000
+    PACKET_HEAD_LEN = 16
 
-    def __init__(self, uid):
+    def __init__(self, uid,):
         """
         Create a Vuser by uid
         :param uid: uid 唯一标识
+        :param scene: 场景对象
         """
         # 缓存存储数据
         self.__cacheCustomData = {}
         self.__uid = uid
+        self.__scene = None
         self.__task = None
-        self.__socks = {}
+        # 链接socket
+        self.__udpsocket = VSocketMgr.GetInstance().CreateVSocket(self)
         self.__states = {}
         self.__currentState = None
         self.__initCompleted = False
@@ -44,6 +49,22 @@ class VUser(object):
         self.__finishTranslation = {}
         # [底层的]缓存未读取完的数据包
         self.__cachePacketData = Packet()
+
+    def GetScene(self):
+        """
+        获取场景对象
+        :return:
+        """
+        return self.__scene
+
+    def SetScene(self, scene):
+        """
+        设置压测场景
+        :param scene:
+        :return:
+        """
+        if isinstance(scene, VUserScene):
+            self.__scene = scene
 
     def SetData(self, key, data):
         """
@@ -247,9 +268,8 @@ class VUser(object):
         :return:
         """
         # 先清除数据，这个也是坑
-        self.__cachePacketData.clear()
+        #self.__cachePacketData.clear()
         self.__cachePacketIndex[sockid] = {"SendIdx": 0, "ReceiveIdx": 0}
-        self.__socks[sockid] = VSocketMgr.GetInstance().CreateVSocket(self, sockid)
         packet = self.CreatePacket()
         packet.writeUnsignedByte(socktype)
         packet.writeUnsignedShort(len(host))
@@ -264,15 +284,15 @@ class VUser(object):
         :param broadcast: 是否通知服务器
         :return:
         """
-        if sockid not in self.__socks:
-            VLog.Error("[PTC] uid:{0} sockid :{1} is not exist!", self.__uid, sockid)
-            return
         # 默认不通知服务器
         if broadcast:
             packet = self.CreatePacket()
             self.__SendPacket(packet, sockid, self.MSG_DISCONNECT)
-        self.__socks[sockid].Close()
-        del self.__socks[sockid]
+        # 更改序号
+        if sockid not in self.__cachePacketIndex:
+            VLog.Error("[PTC] uid:{0} sockid :{1} index is not exist!", self.__uid, sockid)
+            return
+        self.__cachePacketIndex[sockid] = {"SendIdx": 0, "ReceiveIdx": 0}
 
 
     def __SendPacket(self, packet, sockid , msgid):
@@ -283,8 +303,8 @@ class VUser(object):
         :param msgid:
         :return:
         """
-        if sockid not in self.__socks:
-            VLog.Error("[PTC] uid:{0} sockid :{1} is not exist!", self.__uid, sockid)
+        if sockid not in self.__cachePacketIndex:
+            VLog.Error("[PTC] uid:{0} sockid :{1} index is not exist!", self.__uid, sockid)
             return
         # 发送的数据需要再重新包装
         sendPacket = Packet()
@@ -298,10 +318,10 @@ class VUser(object):
         index = self.__cachePacketIndex[sockid]["SendIdx"]
         sendPacket.writeUnsignedInt(index)
         self.__cachePacketIndex[sockid]["SendIdx"] += 1
-        # 消息ID
-        sendPacket.writeUnsignedShort(msgid)
         # sockid
         sendPacket.writeUnsignedByte(sockid)
+        # 消息ID
+        sendPacket.writeUnsignedShort(msgid)
         # 内容
         sendPacket.writeUTFBytes(packet.getvalue())
         # 更新长度
@@ -309,7 +329,7 @@ class VUser(object):
         # 写入正确的协议长度 不包含起始标记和长度自己
         sendPacket.writeUnsignedInt(sendPacket.length()-5)
         # 发送数据
-        self.__socks[sockid].OnSend(sendPacket.getvalue())
+        self.__udpsocket.OnSend(sendPacket.getvalue())
         # 清除
         del packet
         del sendPacket
@@ -322,8 +342,8 @@ class VUser(object):
         :param sockid:
         :return:
         """
-        if sockid not in self.__socks:
-            VLog.Error("[PTC] uid:{0} sockid :{1} is not exist!", self.__uid, sockid)
+        if sockid not in self.__cachePacketIndex:
+            VLog.Error("[PTC] uid:{0} sockid :{1} index is not exist!", self.__uid, sockid)
             return
         # 发送数据
         self.__SendPacket(packet,sockid,self.MSG_PACKET)
@@ -335,10 +355,9 @@ class VUser(object):
         """
         return Packet(data)
 
-    def OnReceive(self, sockid, data):
+    def OnReceive(self,data):
         """
         收到数据
-        :param sockid:
         :param data:
         :return:
         """
@@ -351,60 +370,93 @@ class VUser(object):
         # 这里的分包只是分底层组装的包，具体服务器返回的协议内容有没有完整，需要OnMessage中自己判断
         while length - self.__cachePacketData.position > 0:
             # 长度不足
-            if length - self.__cachePacketData.position < 19:
+            if length - self.__cachePacketData.position < VUser.PACKET_HEAD_LEN:
                 break
             # 开始标记不对
             head_flag = self.__cachePacketData.readUnsignedByte() & 0xFF
             if head_flag != 0xEF:
                 self.__cachePacketData.clear()
-                VLog.Error("[PTC] Recv Packet Head ERROR! uid:{0} sockid:{1} flag:{2}", self.__uid, sockid, head_flag)
+                VLog.Error("[PTC] Recv Packet Head ERROR! uid:{0} flag:{1}", self.__uid, head_flag)
                 break
             pack_len = self.__cachePacketData.readUnsignedInt()
             # 协议长度不足
             if length - self.__cachePacketData.position < pack_len:
                 self.__cachePacketData.position = length
                 break
+            # 检查uid
             uid = self.__cachePacketData.readUnsignedInt()
+            if uid != self.__uid:
+                VLog.Error("[PTC] Recv Packet UID ERROR! uid:{0} ser:{1}", self.__uid, uid)
+            # 检查序号
             idx = self.__cachePacketData.readUnsignedInt()
-            rindex = self.__cachePacketIndex[sockid]["ReceiveIdx"]
-            # 协议序号错了
-            if rindex+1 != idx:
-                self.__cachePacketData.clear()
-                VLog.Error("[PTC] Recv Packet Index ERROR!!!!! uid:{0} local:{1},server:{2}", self.__uid, rindex+1, idx)
-                break
-            self.__cachePacketIndex[sockid]["ReceiveIdx"] += 1
-
-            msgID = self.__cachePacketData.readUnsignedShort()
-            sockid = self.__cachePacketData.readUnsignedInt()
-            if msgID == self.MSG_DISCONNECT:
-                self.OnClose(sockid)
-            elif msgID == self.MSG_PACKET:
-                rdata = self.__cachePacketData.readMulitBytes(pack_len - (4 + 4 + 2 + 4))
-                try:
-                    VSocketMgr.GetInstance().OnMessage(self, sockid, Packet(rdata))
-                except Exception as e:
-                    VLog.Trace(e)
-            elif msgID == self.MSG_CONNECT:
-                VSocketMgr.GetInstance().OnConnected(self,sockid)
+            sock_id = self.__cachePacketData.readUnsignedByte()
+            msg_id = self.__cachePacketData.readUnsignedShort()
+            if sock_id not in self.__cachePacketIndex:
+                receive_index = None
             else:
-                VLog.Error("[PTC] Recv Pack MsgID: {0} error!!!!! uid:{1}", msgID, self.__uid)
+                receive_index = self.__cachePacketIndex[sock_id]["ReceiveIdx"]
+            if receive_index is not None and  receive_index+1 == idx:
+                if msg_id == self.MSG_DISCONNECT:
+                    self.__OnClose(sock_id)
+                elif msg_id == self.MSG_PACKET:
+                    rdata = self.__cachePacketData.readMulitBytes(pack_len - (VUser.PACKET_HEAD_LEN - 5))
+                    self.__OnMessage(sock_id, Packet(rdata))
+                elif msg_id == self.MSG_CONNECT:
+                    self.__OnConnected(sock_id)
+                else:
+                    VLog.Error("[PTC] Recv Packet MsgID ERROR! msg:{0} uid:{1}", msg_id, self.__uid)
+            # 协议序号错了
+            else:
+                self.__cachePacketData.clear()
+                VLog.Error("[PTC] Recv Packet Index ERROR! uid:{0} local:{1} server:{2} sock:{3}",
+                           self.__uid, receive_index + 1, idx, sock_id)
+                break
+            self.__cachePacketIndex[sock_id]["ReceiveIdx"] += 1
+            # 读取剩余内容
             remaining = length - self.__cachePacketData.position
             if remaining <= 0:
                 self.__cachePacketData.clear()
             else:
                 cdata = self.__cachePacketData.readMulitBytes(remaining)
-                self.__cachePacketData.reset(data)
+                self.__cachePacketData.reset(cdata)
             length = self.__cachePacketData.length()
         cost_time = time.time() * 1000 - begin_time
         if cost_time > 20:
-            VLog.Info("[PTC] OnReceice Cost Time:{0}ms UID:{1} sockID:{2}", cost_time, self.__uid, sockid)
+            VLog.Info("[PTC] OnReceice Cost Time:{0}ms UID:{1}", cost_time, self.__uid)
 
-    def OnClose(self, sockid):
+    def __OnClose(self, sock_id):
         """
         服务器关闭
-        :param sockid:
+        :param sock_id:
         :return:
         """
-        VLog.Info("[PTC] Server Closed the socket uid:{0} , sockID:{1}", self.__uid, sockid)
-        VSocketMgr.GetInstance().OnDisconnect(self, sockid)
-        self.Disconnect(sockid, False)
+        VLog.Debug("[PTC] Server Closed the socket uid:{0} , sockID:{1}", self.__uid, sock_id)
+        try:
+            self.__scene.OnDisconnect(sock_id)
+        except Exception as e:
+            VLog.Trace(e)
+        self.Disconnect(sock_id, False)
+
+    def __OnConnected(self, sock_id):
+        """
+        服务器链接成功
+        :param sock_id:
+        :return:
+        """
+        VLog.Debug("[PTC] Server connected the socket uid:{0} , sockID:{1}", self.__uid, sock_id)
+        try:
+            self.__scene.OnConnected(sock_id)
+        except Exception as e:
+            VLog.Trace(e)
+
+    def __OnMessage(self, sock_id, packet):
+        """
+        协议返回
+        :param sock_id:
+        :param packet:
+        :return:
+        """
+        try:
+            self.__scene.OnMessage(sock_id, packet)
+        except Exception as e:
+            VLog.Trace(e)

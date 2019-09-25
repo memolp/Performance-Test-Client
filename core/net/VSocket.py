@@ -5,18 +5,17 @@
 """
 
 import socket
-import core.VLog as VLog
+import core.utils.VLog as VLog
 
 
 class VSocket:
     """
     user udp socket
     """
-    def __init__(self, vuser, sockid, host, port , maxbufszie):
+    def __init__(self, vuser, host, port , maxbufszie):
         """
         创建socket
         :param vuser:
-        :param sockid:
         :param host:
         :param port:
         """
@@ -27,7 +26,6 @@ class VSocket:
         self.__vuser = vuser
         self.__server = host
         self.__port  = port
-        self.__sockid = sockid
         self.__selectServer = None
         self.__maxbufszie = maxbufszie
 
@@ -46,12 +44,15 @@ class VSocket:
         """
         try:
             data, address = self.__sock.recvfrom(self.__maxbufszie)
+        except ConnectionResetError:
+            self.Close()
+            return
         except Exception as e:
             VLog.Trace(e)
             self.Close()
             return
         try:
-            self.__vuser.OnReceive(self.__sockid,data)
+            self.__vuser.OnReceive(data)
         except Exception as e:
             VLog.Trace(e)
 

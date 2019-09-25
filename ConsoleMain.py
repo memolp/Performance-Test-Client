@@ -5,11 +5,14 @@
   压测脚本将支持GUI和控制台（方便可以在多平台下运行）
 """
 
+import os
+import sys
 import argparse
 
-from core.VSocketMgr import VSocketMgr
-from core.VUserMgr import VUserMgr
-from core import Loader
+from core.net.VSocketMgr import VSocketMgr
+from core.vuser.VUserMgr import VUserMgr
+from core.utils import Loader
+
 
 def Main():
     """
@@ -32,7 +35,14 @@ def Main():
     VSocketMgr.PTC_PORT = argument.port
     VUserMgr.RUN_TEST_TIMES = argument.times
 
-    module = Loader.LoadModule(argument.script)
+    # 压测脚本
+    script_file = argument.script
+    if not os.path.exists(script_file):
+        return
+    # 添加压测脚本目录
+    sys.path.append(os.path.dirname(__file__))
+    # 加载压测脚本
+    module = Loader.LoadModule(script_file)
     if module is None:
         return
     # 网络线程组启动
@@ -51,14 +61,19 @@ def LocalTest():
     VSocketMgr.PTC_PORT = 7090
     VUserMgr.RUN_TEST_TIMES = 300
 
-    module = Loader.LoadModule("./script/test.py")
+    # 压测脚本
+    script_file = "./script/test.py"
+    # 添加压测脚本目录
+    sys.path.append(os.path.dirname(__file__))
+    # 加载压测脚本
+    module = Loader.LoadModule(script_file)
     if module is None:
         return
     # 网络线程组启动
     VSocketMgr.GetInstance().CreateServer(module, "win")
     # 用户管理启动
-    VUserMgr.GetInstance().CreateVUser(module, 10000, 1000)
-    VUserMgr.GetInstance().Start(1)
+    VUserMgr.GetInstance().CreateVUser(module, 10, 1)
+    VUserMgr.GetInstance().Start(0.1)
 
 if __name__ == "__main__":
     LocalTest()

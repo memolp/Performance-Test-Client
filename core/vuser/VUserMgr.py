@@ -6,12 +6,12 @@
 
 import time
 import threading
-import core.VLog as VLog
-import core.VUtils as VUtils
+import core.utils.VLog as VLog
+import core.utils.VUtils as VUtils
 
 from concurrent.futures import ThreadPoolExecutor
-from core.VUser import VUser
-from core.VUtils import *
+from core.vuser.VUser import VUser
+from core.utils.VUtils import *
 
 
 class VUserMgr:
@@ -57,10 +57,11 @@ class VUserMgr:
         # 创建用户
         for i in range(count):
             user = VUser(i)
+            user.SetScene(self.__script.CreateScene(user))
             self.__vuserList.append(user)
 
         # 根据并发创建对应数量的线程池
-        self.__threadExecutor = ThreadPoolExecutor(self.__tps*2)
+        self.__threadExecutor = ThreadPoolExecutor(self.__tps * 1.2)
 
     def CulTranslation(self,vuser, transaltion_info):
         """
@@ -105,11 +106,11 @@ class VUserMgr:
                     # 状态回调方法执行
                     callback = vuser.GetStateCallback()
                     if callback is not None:
-                        callback(vuser,*vuser.GetStateCallbackArgs())
+                        callback(*vuser.GetStateCallbackArgs())
                     # 间隔执行
                     callback = vuser.GetTickCallback()
                     if callback is not None:
-                        callback(vuser, start_time)
+                        callback(start_time)
                 except Exception as e:
                     VLog.Trace(e)
 
@@ -130,7 +131,7 @@ class VUserMgr:
             if cost_time < 1.0:
                 time.sleep(1.0 - cost_time)
             else:
-                VLog.Error("[PTC] TickerThread function cost_time :{0}!!!!!!!!",cost_time)
+                VLog.Error("[PTC] TickerThread function cost_time :{0}!!!!!!!!", cost_time)
 
     def _start_tick_thread(self):
         """
@@ -154,7 +155,7 @@ class VUserMgr:
             for vuser in self.__vuserList:
                 if vuser.GetInitCompleted():
                     count += 1
-            VLog.Info("[PTC] Init Completed Client Count:{0}",count)
+            VLog.Info("[PTC] Init Completed Client Count:{0}", count)
             if count/size >= percent:
                 break
             else:
@@ -197,7 +198,7 @@ class VUserMgr:
             if cost_time < 1.0:
                 time.sleep(1.0 - cost_time)
             else:
-                VLog.Error("[PTC] Start function cost_time :{0}!!!!!!!!",cost_time)
+                VLog.Error("[PTC] Start function cost_time :{0}!!!!!!!!", cost_time)
 
 
     def OnInit(self, vuser):
@@ -207,7 +208,7 @@ class VUserMgr:
         :return:
         """
         try:
-            self.__script.OnInit(vuser)
+            vuser.GetScene().OnInit()
         except Exception as e:
             VLog.Trace(e)
 
@@ -219,6 +220,6 @@ class VUserMgr:
         :return:
         """
         try:
-            self.__script.OnConcurrence(vuser, count)
+            vuser.GetScene().OnConcurrence(count)
         except Exception as e:
             VLog.Trace(e)

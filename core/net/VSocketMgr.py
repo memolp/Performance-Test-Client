@@ -7,11 +7,11 @@ socket 管理器
 import time
 import selectors
 import threading
-import core.VLog as VLog
-import core.VUtils as VUtils
+import core.utils.VLog as VLog
+import core.utils.VUtils as VUtils
 
 
-from core.VSocket import VSocket
+from core.net.VSocket import VSocket
 
 
 class VSocketMgr:
@@ -59,14 +59,14 @@ class VSocketMgr:
         else:
             raise TypeError("platform :{0} is not support!".format(platform))
 
-    def CreateVSocket(self, vuser, sockid):
+    def CreateVSocket(self, vuser):
         """
         创建一个vsocket对象
         :param vuser:
         :param sockid:
         :return:
         """
-        sock = VSocket(vuser, sockid, self.PTC_HOST, self.PTC_PORT , self.RECV_MAX_BUFF_SIZE)
+        sock = VSocket(vuser, self.PTC_HOST, self.PTC_PORT , self.RECV_MAX_BUFF_SIZE)
         self.Register(sock)
         return sock
 
@@ -84,43 +84,6 @@ class VSocketMgr:
         sock.SetSocketServer(sockserver[0])
         sockserver[0].register(sock.GetFD(), selectors.EVENT_READ, sock.OnReceive)
 
-    def OnConnected(self, vuser, sockid):
-        """
-        连接成功
-        :param vuser:
-        :param sockid:
-        :return:
-        """
-        try:
-            self.__script.OnConnected(vuser, sockid)
-        except Exception as e:
-            VLog.Trace(e)
-
-    def OnMessage(self, vuser, sockid, data):
-        """
-        某个user网络协议返回
-        :param vuser:
-        :param sockid:
-        :param data:
-        :return:
-        """
-        try:
-            self.__script.OnMessage(vuser, sockid, data)
-        except Exception as e:
-            VLog.Trace(e)
-
-    # 网络链接断开
-    def OnDisconnect(self, vuser, sockid):
-        """
-        某个user的网络断开
-        :param vuser:
-        :param sockid:
-        :return:
-        """
-        try:
-            self.__script.OnDisconnect(vuser, sockid)
-        except Exception as e:
-            VLog.Trace(e)
 
 class _VSocketServerThread(threading.Thread):
     """
@@ -140,8 +103,10 @@ class _VSocketServerThread(threading.Thread):
                 continue
             try:
                 events = self.__selector.select(0.001)
+            except OSError:
+                time.sleep(1.0)
+                continue
             except Exception as e:
-                print('socks:::::', len(self.__selector._readers))
                 time.sleep(1.0)
                 VLog.Trace(e)
                 continue
