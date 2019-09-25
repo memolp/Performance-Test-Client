@@ -200,6 +200,7 @@ class VUser(object):
         :param task:
         :return:
         """
+        del self.__task
         self.__task = task
 
     def TaskFinish(self):

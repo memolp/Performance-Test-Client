@@ -61,7 +61,7 @@ class VUserMgr:
             self.__vuserList.append(user)
 
         # 根据并发创建对应数量的线程池
-        self.__threadExecutor = ThreadPoolExecutor(self.__tps * 1.2)
+        self.__threadExecutor = ThreadPoolExecutor()
 
     def CulTranslation(self,vuser, transaltion_info):
         """
@@ -170,36 +170,37 @@ class VUserMgr:
         """
         # 启动定时器线程
         self._start_tick_thread()
+        VLog.Info("[PTC] Call VUser OnInit ............................")
         # 调用初始化
         for users in self.__random.taker(self.__vuserList, self.__tps):
-            for user in users:
-                self.OnInit(user)
+            [self.OnInit(user) for user in users]
             if delay > 0:
                 time.sleep(delay)
+        VLog.Info("[PTC] Call VUser OnInit ............................end")
         # 等待客户端初始化完成
         self._wait_client_initCompleted(0.9)
+        VLog.Info("[PTC] Begin Concurrence ............................")
         # 主循环
         round_count = 0
         while self.RUN_TEST_TIMES == -1 or (round_count < self.RUN_TEST_TIMES):
             start_time = time.time()
-            users = self.__random.poll(self.__vuserList, self.__tps, lambda x:x.TaskFinish())
+            users = self.__random.poll(self.__vuserList, self.__tps, lambda x : x.TaskFinish())
             if len(users) < self.__tps:
                 VLog.Info("[PTC] Concurrence TPS :{0} ,expect:{1}", len(users), self.__tps)
             # 执行任务
             for vuser in users:
                 task = self.__threadExecutor.submit(self.OnConcurrence, vuser, round_count)
                 vuser.SetTask(task)
-
             # 每执行一轮，+1
             round_count += 1
-
             # 花费时间正常不会超过1秒
             cost_time = time.time() - start_time
+            # 超过0.6就打印出来，防止sleep的问题影响并发
+            if cost_time > 0.6:
+                VLog.Error("[PTC] Start function cost_time :{0}!!!!!!!!", cost_time)
             if cost_time < 1.0:
                 time.sleep(1.0 - cost_time)
-            else:
-                VLog.Error("[PTC] Start function cost_time :{0}!!!!!!!!", cost_time)
-
+        VLog.Info("[PTC] Begin Concurrence ............................end")
 
     def OnInit(self, vuser):
         """
