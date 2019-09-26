@@ -42,7 +42,7 @@ class NewScene(VUserScene):
         vuser创建后调用
         :return:
         """
-        self.vUser.Connect("127.0.0.1", 4567, 0, 0)
+        #self.vUser.Connect("127.0.0.1", 4567, 0, 0)
         self.vUser.Connect("127.0.0.1", 4567, 1, 0)
 
     def OnDisconnect(self, sock_id):
