@@ -61,7 +61,7 @@ def LocalTest():
     VSocketMgr.MAX_SELECT_TASK_NUM = 5
     VSocketMgr.PTC_HOST = "127.0.0.1"
     VSocketMgr.PTC_PORT = 7090
-    VUserMgr.RUN_TEST_TIMES = 3000
+    VUserMgr.RUN_TEST_TIMES = 900
 
     # 压测脚本
     script_file = "./script/test.py"
@@ -71,7 +71,7 @@ def LocalTest():
     module = Loader.LoadModule(script_file)
     if module is None:
         return
-    user = 10000
+    user = 2000
     tps  = 500
     # 网络线程组启动
     VSocketMgr.GetInstance().CreateServer(module, 20)

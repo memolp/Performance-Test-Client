@@ -101,6 +101,8 @@ class VUserMgr:
             start_time = time.time()
             # 事务信息
             transaltion_info = {}
+            pf = open("test.html", "w")
+            pf.write("<ul>\r\n")
             # 用户列表
             for vuser in self.__vuserList:
                 try:
@@ -117,7 +119,9 @@ class VUserMgr:
 
                 # 统计事务
                 self.CulTranslation(vuser, transaltion_info)
-
+                pf.write("<li>UID:{0} STATUS:{1}</li>\r\n".format(vuser.GetUID(), vuser.TaskFinish()))
+            pf.write("</ul>\r\n")
+            pf.close()
             #针对统计的事务进行打印输出
             for key,transinfo in transaltion_info.items():
                 doing = transinfo["doing"]
