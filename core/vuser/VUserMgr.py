@@ -12,6 +12,7 @@ import core.utils.VUtils as VUtils
 from concurrent.futures import ThreadPoolExecutor
 from core.vuser.VUser import VUser
 from core.utils.VUtils import *
+from core.utils.threadpool import ThreadExecutor
 
 
 class VUserMgr:
@@ -61,7 +62,7 @@ class VUserMgr:
             self.__vuserList.append(user)
 
         # 根据并发创建对应数量的线程池
-        self.__threadExecutor = ThreadPoolExecutor()
+        self.__threadExecutor = ThreadExecutor(threadname="Concurrence")
 
     def CulTranslation(self,vuser, transaltion_info):
         """

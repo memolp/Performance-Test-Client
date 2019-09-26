@@ -12,6 +12,7 @@ import argparse
 from core.net.VSocketMgr import VSocketMgr
 from core.vuser.VUserMgr import VUserMgr
 from core.utils import Loader
+from core.utils.threadpool import ThreadExecutor
 
 
 def Main():
@@ -45,6 +46,7 @@ def Main():
     module = Loader.LoadModule(script_file)
     if module is None:
         return
+    threadExecutor = ThreadExecutor()
     # 网络线程组启动
     VSocketMgr.GetInstance().CreateServer(module, argument.platform)
     # 用户管理启动
@@ -56,10 +58,10 @@ def LocalTest():
     本地测试代码
     :return:
     """
-    VSocketMgr.WIN_MAX_THREAD_NUM = 1
+    VSocketMgr.MAX_SELECT_TASK_NUM = 5
     VSocketMgr.PTC_HOST = "127.0.0.1"
     VSocketMgr.PTC_PORT = 7090
-    VUserMgr.RUN_TEST_TIMES = 300
+    VUserMgr.RUN_TEST_TIMES = 3000
 
     # 压测脚本
     script_file = "./script/test.py"
@@ -69,11 +71,13 @@ def LocalTest():
     module = Loader.LoadModule(script_file)
     if module is None:
         return
+    user = 10000
+    tps  = 500
     # 网络线程组启动
-    VSocketMgr.GetInstance().CreateServer(module, "win")
+    VSocketMgr.GetInstance().CreateServer(module, 20)
     # 用户管理启动
-    VUserMgr.GetInstance().CreateVUser(module, 1024, 100)
-    VUserMgr.GetInstance().Start(0.1)
+    VUserMgr.GetInstance().CreateVUser(module, user, tps)
+    VUserMgr.GetInstance().Start(0.3)
 
 if __name__ == "__main__":
     LocalTest()

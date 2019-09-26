@@ -5,13 +5,15 @@ socket 管理器
 """
 
 import time
+import math
 import selectors
 import threading
 import core.utils.VLog as VLog
 import core.utils.VUtils as VUtils
-
+import core.utils.threadpool as ThreadPool
 
 from core.net.VSocket import VSocket
+
 
 
 class VSocketMgr:
@@ -19,7 +21,8 @@ class VSocketMgr:
     socket管理器
     """
     _instance = None
-    WIN_MAX_THREAD_NUM = 4
+    MAX_SELECT_TASK_NUM = 4
+    MAX_SELECT_NUM = 512
     RECV_MAX_BUFF_SIZE = 1024 * 1024
     PTC_HOST = "127.0.0.1"
     PTC_PORT = 7090
@@ -38,26 +41,21 @@ class VSocketMgr:
         self.__serverList = []
         self.__script = None
         self.__random = VUtils.Random()
+        self.__executor = ThreadPool.ThreadExecutor(self.MAX_SELECT_TASK_NUM)
 
-    def CreateServer(self,script, platform="win"):
+    def CreateServer(self, script, select_num):
         """
         创建server
         :param script:
-        :param platform:
+        :param select_num: select数量
         :return:
         """
         self.__script = script
-        if platform == "win":
-            # 创建指定数量的sock server
-            for i in range(self.WIN_MAX_THREAD_NUM):
-                self.__serverList.append(_VSocketServerThread())
-                self.__serverList[-1].start()
-        elif platform == "linux":
-            # epoll只需一个线程即可
-            self.__serverList.append(_VSocketServerThread())
-            self.__serverList[-1].start()
-        else:
-            raise TypeError("platform :{0} is not support!".format(platform))
+        # 创建指定数量的sock server
+        for i in range(select_num):
+            sel = VSelector()
+            self.__serverList.append(sel)
+            self.__executor.create(self._execute, sel)
 
     def CreateVSocket(self, vuser):
         """
@@ -83,6 +81,59 @@ class VSocketMgr:
         # 注册
         sock.SetSocketServer(sockserver[0])
         sockserver[0].register(sock.GetFD(), selectors.EVENT_READ, sock.OnReceive)
+
+    def _execute(self, selector):
+        """
+        select执行
+        :param selector:
+        :return:
+        """
+        try:
+            selector.run()
+        except Exception as e:
+            VLog.Trace(e)
+
+
+class VSelector:
+    """ """
+    def __init__(self):
+        """ """
+        self.__selector = selectors.DefaultSelector()
+
+    def run(self):
+        """"""
+        try:
+            events = self.__selector.select(0.001)
+        except OSError:
+            time.sleep(1.0)
+            return
+        except Exception as e:
+            VLog.Trace(e)
+            return
+        for key, mask in events:
+            func = key.data
+            try:
+                func()
+            except Exception as e:
+                VLog.Trace(e)
+
+    def register(self, fileObj, mask, callback):
+        """
+        注册socket
+        :param fileObj:
+        :param mask:
+        :param callback:
+        :return:
+        """
+        self.__selector.register(fileObj, mask, callback)
+
+    def remove(self,fileobj):
+        """
+        移除socket
+        :param fileobj:
+        :return:
+        """
+        self.__selector.unregister(fileobj)
 
 
 class _VSocketServerThread(threading.Thread):
