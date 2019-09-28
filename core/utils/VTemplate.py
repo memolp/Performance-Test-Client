@@ -4,8 +4,7 @@
  压测脚本模板
 """
 
-str_template = """
-# -*- coding:utf-8 -*-
+str_template = """# -*- coding:utf-8 -*-
 
 \"\"\"
 压测场景，继承自VUserScene类，或者继承自VUserScene的子类

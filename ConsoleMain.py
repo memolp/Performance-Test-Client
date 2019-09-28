@@ -71,8 +71,8 @@ def LocalTest():
     module = Loader.LoadModule(script_file)
     if module is None:
         return
-    user = 2000
-    tps  = 500
+    user = 10000
+    tps  = 1000
     # 网络线程组启动
     VSocketMgr.GetInstance().CreateServer(module, 20)
     # 用户管理启动
