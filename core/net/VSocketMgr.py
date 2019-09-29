@@ -22,7 +22,6 @@ class VSocketMgr:
     """
     _instance = None
     MAX_SELECT_TASK_NUM = 4
-    MAX_SELECT_NUM = 512
     RECV_MAX_BUFF_SIZE = 1024 * 1024
     PTC_HOST = "127.0.0.1"
     PTC_PORT = 7090

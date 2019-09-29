@@ -22,6 +22,8 @@
   -----------------------------------------------------------------
 """
 import os
+import win32process
+import ConsoleMain
 
 from PyQt5.QtWidgets import *
 from PyQt5.Qt import *
@@ -29,7 +31,19 @@ from PyQt5.Qt import *
 from gui.FileExplorer import VFileExplorer
 from gui.ScriptEditor import VScriptEditor
 from gui.ConsoleView import VConsoleView
+from gui.RunTestDialog import RunTestDialog
 from core.utils.VTemplate import str_template
+
+
+class VTestThread(QThread):
+    """"""
+    def __init__(self, config, parent=None):
+        super(VTestThread, self).__init__(parent)
+        self._config = config
+    def run(self):
+        """"""
+        ConsoleMain.RunConsole(self._config)
+        del self._config
 
 
 class VRobotEditor(QMainWindow):
@@ -47,6 +61,8 @@ class VRobotEditor(QMainWindow):
         self.vScriptEditor = VScriptEditor(self)
         self.setCentralWidget(self.vScriptEditor)
         self._create_dock()
+
+        self.__testThread = None
 
     def _create_system_menu(self):
         """
@@ -77,9 +93,12 @@ class VRobotEditor(QMainWindow):
 
         _testmenu = _menuBar.addMenu("压测")
         _start_test_ac = QAction("开始压测", self)
+        _start_test_ac.setShortcut("F5")
+        _start_test_ac.triggered.connect(self.__runTestEvent)
         _testmenu.addAction(_start_test_ac)
 
         _stop_test_ac = QAction("停止压测", self)
+        _stop_test_ac.triggered.connect(self.__stopTestEvent)
         _testmenu.addAction(_stop_test_ac)
 
         _toolmenu = _menuBar.addMenu("工具")
@@ -134,6 +153,7 @@ class VRobotEditor(QMainWindow):
         self.vConsoleView = VConsoleView()
         console_dock.setWidget(self.vConsoleView)
         self.addDockWidget(Qt.BottomDockWidgetArea, console_dock)
+        self.vConsoleView.AttachConsole()
 
     def __newScriptEvent(self):
         """"""
@@ -174,7 +194,46 @@ class VRobotEditor(QMainWindow):
         """"""
         self.close()
 
+    def __runTestEvent(self):
+        """"""
+        test_script = self.vScriptEditor.GetCurrentScript()
+        if test_script is None:
+            return QMessageBox.information(self, "提示", "请先打开压测场景")
+        if not test_script.endswith(".py"):
+            return QMessageBox.information(self, "提示", "请选择压测脚本")
+        # 打开配置窗口
+        dlg = RunTestDialog(self, test_script)
+        dlg.exec()
+        if not dlg.IsTesting():
+            return
+        config = dlg.GetTestConfig()
+        # 执行检查
+        if config['mode'] == 1:
+            str_cmd = ""
+            for key,value in config.items():
+                str_cmd += "-{0} {1} ".format(key,value)
+            self.LaunchApp("./ConsoleMain.exe",str_cmd)
+        else:
+            if self.__testThread is not None and self.__testThread.isRunning():
+                return QMessageBox.information(self, "提示", "压测运行中")
+            self.__testThread = VTestThread(config)
+            self.__testThread.start()
+
+    def __stopTestEvent(self):
+        if self.__testThread is None or not self.__testThread.isRunning():
+            return QMessageBox.information(self, "提示", "压测已结束")
+        self.__testThread.stop()
+
     def _on_open_file(self, filename):
         """"""
         if not self.vScriptEditor.OpenFile(filename):
             return QMessageBox.critical(self, "提示", "打开文件失败")
+
+    def LaunchApp(self, app , args=''):
+        app_file = app.replace("\\", "/")
+        app_root = app_file[:app_file.rfind("/")]
+        result = win32process.CreateProcess(app, args, None, None, 0,
+                    win32process.CREATE_NO_WINDOW, None, app_root,
+                    win32process.STARTUPINFO())
+        if not result or len(result) < 4:
+            return False

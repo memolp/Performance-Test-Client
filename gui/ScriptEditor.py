@@ -150,3 +150,14 @@ class VScriptEditor(QTabWidget):
         if cache_tab is not None:
             self.setTabText(cache_tab['index'],"{0} - 未保存".format(basename))
             cache_tab['save'] = 0
+
+    def GetCurrentScript(self):
+        """ """
+        index = self.currentIndex()
+        if index < 0:
+            return None
+        text = self.tabText(index)
+        cache_tab = self._cacheTabList.get(text, None)
+        if cache_tab is None:
+            return None
+        return cache_tab["filename"]

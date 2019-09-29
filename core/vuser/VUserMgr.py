@@ -22,6 +22,7 @@ class VUserMgr:
     _instance = None
     # 默认一直运行
     RUN_TEST_TIMES = -1
+    MAX_THREAD_NUM = 10
 
     @staticmethod
     def GetInstance():
@@ -62,7 +63,7 @@ class VUserMgr:
             self.__vuserList.append(user)
 
         # 根据并发创建对应数量的线程池
-        self.__threadExecutor = ThreadExecutor(threadname="Concurrence")
+        self.__threadExecutor = ThreadExecutor(self.MAX_THREAD_NUM,threadname="Concurrence")
 
     def CulTranslation(self,vuser, transaltion_info):
         """
