@@ -1,13 +1,33 @@
 # -*- coding:utf-8 -*-
 
 """
- 线程池
- 线程池的任务执行说明：
-    1、执行的任务分为两类：单任务（执行这个任务后就结束了），环任务（执行这个任务后，这个任务还有继续放入执行）
-    2、线程池中存在两个队列，分别装载上面的两种任务
-    2、执行的优先级：
-        1) 单任务-优先被执行，直到队列为空结束
-        2) 环任务-每次循环只执行一个环任务
+MIT License
+
+Copyright (c) 2019 JeffXun
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+content:
+    线程池
+author:
+    JeffXun
+
 """
 
 import os

@@ -1,8 +1,33 @@
 # -*- coding:utf-8 -*-
 
 """
-  控制台入口
-  压测脚本将支持GUI和控制台（方便可以在多平台下运行）
+MIT License
+
+Copyright (c) 2019 JeffXun
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+content:
+    控制台入口
+    压测脚本将支持GUI和控制台（方便可以在多平台下运行）
+author:
+    JeffXun
 """
 
 import os
@@ -20,9 +45,7 @@ def Main():
     入口
     :return:
     """
-    pf = open("tttt.txt","w")
     try:
-        pf.write("sss!!!\r\n")
         parse = argparse.ArgumentParser(prog="PTClient-console")
         parse.add_argument("-host", help="PTC Server host", type=str)
         parse.add_argument("-port", help="PTC Server port", type=int)
@@ -33,15 +56,11 @@ def Main():
         parse.add_argument("-thread_net", help="thread of network num", type=int, default=4)
         parse.add_argument("-thread_tps", help="thread of tps num", type=int, default=10)
         parse.add_argument("-max_fd", help="select max fd num", type=int, default=500)
-        pf.write("s222ss!!!\r\n")
         # 解析
         argument = parse.parse_args()
-        pf.write("s44444ss!!!\r\n")
         RunConsole(argument)
-        pf.write("55555sss!!!\r\n")
     except Exception as e:
-            pf.write(e)
-    pf.close()
+        print(e)
 
 def RunConsole(argument):
     """"""

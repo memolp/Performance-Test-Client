@@ -1,7 +1,32 @@
 # -*- coding:utf-8 -*-
 
 """
- 运行设置
+MIT License
+
+Copyright (c) 2019 JeffXun
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+content:
+    运行设置
+author:
+    JeffXun
 """
 
 import os
@@ -12,7 +37,7 @@ from PyQt5.Qt import *
 from core.utils.VAttrObject import VAttrObject
 
 class RunTestDialog(QDialog):
-    """ 设备选择对话框 """
+    """ 运行测试选择对话框 """
     def __init__(self,parent, test_script):
         """ """
         super(RunTestDialog,self).__init__(parent)
@@ -20,7 +45,7 @@ class RunTestDialog(QDialog):
         self.setFixedWidth(400)
         self.setFixedHeight(240)
 
-        self.mNomalWidget = self._create_test_options(test_script)
+        self.mNomalWidget = self._create_test_options(os.path.basename(test_script))
         self.mDetailsWidget = self._create_detail_options()
         self.mBtnsWidget = self._create_btns()
 
@@ -45,19 +70,23 @@ class RunTestDialog(QDialog):
 
         _gLayout.addWidget(QLabel("运行模式:"), 2, 1)
         self.mTestModeCombox = QComboBox()
+        self.mTestModeCombox.setObjectName("combox-mode")
         self.mTestModeCombox.addItems(["在线模式", "离线模式"])
         _gLayout.addWidget(self.mTestModeCombox, 2, 2)
 
         _gLayout.addWidget(QLabel("用户数量:"), 3, 1)
         self.mTestUserInput = QLineEdit("50")
+        self.mTestUserInput.setObjectName("input-user")
         _gLayout.addWidget(self.mTestUserInput, 3, 2)
 
         _gLayout.addWidget(QLabel("压测轮次:"), 4, 1)
         self.mTestRoundInput = QLineEdit("-1")
+        self.mTestRoundInput.setObjectName("input-round")
         _gLayout.addWidget(self.mTestRoundInput, 4, 2)
 
         _gLayout.addWidget(QLabel("并发TPS:"), 5, 1)
         self.mTestTpsInput = QLineEdit("1")
+        self.mTestTpsInput.setObjectName("input-tps")
         _gLayout.addWidget(self.mTestTpsInput, 5, 2)
 
         _normalWidget.setLayout(_gLayout)
@@ -70,21 +99,26 @@ class RunTestDialog(QDialog):
 
         _gLayout.addWidget(QLabel("PTC服务IP:"), 1, 1)
         self.mTestPTCHostInput = QLineEdit("127.0.0.1")
+        self.mTestPTCHostInput.setObjectName('input-host')
         _gLayout.addWidget(self.mTestPTCHostInput, 1, 2)
         _gLayout.addWidget(QLabel("PTC服务端口:"), 1, 3)
         self.mTestPTCPortInput = QLineEdit("7090")
+        self.mTestPTCPortInput.setObjectName('input-port')
         _gLayout.addWidget(self.mTestPTCPortInput, 1, 4)
 
         _gLayout.addWidget(QLabel("线程用户数:"), 2, 1)
         self.mTestThreadFDNumInput = QLineEdit("500")
+        self.mTestThreadFDNumInput.setObjectName('input-thread-fd')
         _gLayout.addWidget(self.mTestThreadFDNumInput, 2, 2)
 
         _gLayout.addWidget(QLabel("网络线程数:"), 3, 1)
         self.mTestNetThreadNumInput = QLineEdit("{0}".format(os.cpu_count()))
+        self.mTestNetThreadNumInput.setObjectName('input-thread-net')
         _gLayout.addWidget(self.mTestNetThreadNumInput, 3, 2)
 
         _gLayout.addWidget(QLabel("并发线程数:"), 4, 1)
         self.mTestTpsThreadNumInput = QLineEdit("{0}".format(os.cpu_count()))
+        self.mTestTpsThreadNumInput.setObjectName('input-tps-net')
         _gLayout.addWidget(self.mTestTpsThreadNumInput, 4, 2)
 
         _details_widget.setLayout(_gLayout)
@@ -97,14 +131,17 @@ class RunTestDialog(QDialog):
 
         _hLayout.addStretch(1)
         self.mBtnTest = QPushButton("开始")
+        self.mBtnTest.setObjectName('btn-run')
         self.mBtnTest.clicked.connect(self._readyToStart)
         _hLayout.addWidget(self.mBtnTest)
 
         self.mBtnDetails = QPushButton("高级")
+        self.mBtnDetails.setObjectName('btn-details')
         self.mBtnDetails.clicked.connect(self.__toggle_details_layout)
         _hLayout.addWidget(self.mBtnDetails)
 
         self.mBtnCancel = QPushButton("取消")
+        self.mBtnCancel.setObjectName('btn-cancel')
         self.mBtnCancel.clicked.connect(self.__close)
         _hLayout.addWidget(self.mBtnCancel)
 
