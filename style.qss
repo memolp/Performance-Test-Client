@@ -1,0 +1,29 @@
+QPushButton{
+	text-align:center;
+	padding:5px;
+	border-radius:5px;
+	font-weight: bold;
+	color:#FFF;
+	font-size:16px;
+	font-family:"Microsoft YaHei";
+	background:#bd362f;
+}
+QPushButton:disabled{background:#282c34;}
+QPushButton#btn-start{background:#5bb75b;padding:15px;}
+QPushButton#btn-start:hover{background:#51a351;}
+QPushButton#btn-start:disabled{background:#282c34;}
+QPushButton#btn-stop{background:#da4f49;padding:15px;}
+QPushButton#btn-stop:hover{background:#bd362f;}
+QPushButton#btn-stop:disabled{background:#282c34;}
+QPushButton#btn-pause{background:#faa732;padding:15px;}
+QPushButton#btn-pause:hover{background:#f89406;}
+QPushButton#btn-pause:disabled{background:#282c34;}
+QLabel{text-align:center;font-size:16px;color:#bd362f;font-weight: bold;font-family:"Microsoft YaHei";}
+QMenu { background-color: white; border: 1px solid white;}
+QMenu::item {background-color: transparent;padding:5px 20px; margin:0px 2px; }
+QMenu::item:selected {background-color: #2dabf9;}
+QListWidget{padding:1px;}
+QListWidget::Item{padding-top:2px; padding-bottom:2px;border-bottom:1px solid #ff0000;}
+QListWidget::Item:hover{background:skyblue; }
+QListWidget::item:selected{background:#313034; color:red; }
+QMessageBox{background:#313034;min-width:100px;}

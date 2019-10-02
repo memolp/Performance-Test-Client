@@ -32,8 +32,11 @@ from gui.FileExplorer import VFileExplorer
 from gui.ScriptEditor import VScriptEditor
 from gui.ConsoleView import VConsoleView
 from gui.RunTestDialog import RunTestDialog
+from gui.ProcessMonitor import VProcessMonitor
+from gui.AboutDialog import VAboutDialog
 from core.utils.VTemplate import str_template
 
+import gui.Config as Config
 
 class VTestThread(QThread):
     """"""
@@ -58,9 +61,12 @@ class VRobotEditor(QMainWindow):
 
         self.vFileExplorer = None
         self.vConsoleView = None
+        self.vProcessMonitor = None
         self.vScriptEditor = VScriptEditor(self)
         self.setCentralWidget(self.vScriptEditor)
         self._create_dock()
+
+        self.__refreshWindowStyle()
 
         self.__testThread = None
 
@@ -105,11 +111,17 @@ class VRobotEditor(QMainWindow):
         _setting_ac = QAction("设置", self)
         _toolmenu.addAction(_setting_ac)
 
+        _ptc_cfg_ac = QAction("PTC中心配置", self)
+        _ptc_cfg_ac.triggered.connect(self.__changePTCControllerCfg)
+        _toolmenu.addAction(_ptc_cfg_ac)
+
         _theme_ac = QAction("主题编辑", self)
+        _theme_ac.triggered.connect(self.__changeThemeStyle)
         _toolmenu.addAction(_theme_ac)
 
         _helpmenu = _menuBar.addMenu("帮助")
         _about_ac = QAction("关于", self)
+        _about_ac.triggered.connect(self.__aboutEvent)
         _helpmenu.addAction(_about_ac)
 
         _check_up_ac = QAction("检查更新", self)
@@ -141,11 +153,18 @@ class VRobotEditor(QMainWindow):
         """
         file_dock = QDockWidget("文件管理器", self)
         file_dock.setFeatures(QDockWidget.DockWidgetMovable)
-        file_dock.setAllowedAreas(Qt.LeftDockWidgetArea)
+        file_dock.setAllowedAreas(Qt.LeftDockWidgetArea|Qt.RightDockWidgetArea)
         self.vFileExplorer = VFileExplorer()
         file_dock.setWidget(self.vFileExplorer)
-        self.addDockWidget(Qt.LeftDockWidgetArea, file_dock)
+        self.addDockWidget(Qt.RightDockWidgetArea, file_dock)
         self.vFileExplorer.file_open_event.connect(self._on_open_file)
+
+        process_dock = QDockWidget("进程信息", self)
+        process_dock.setFeatures(QDockWidget.DockWidgetMovable)
+        process_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        self.vProcessMonitor = VProcessMonitor()
+        process_dock.setWidget(self.vProcessMonitor)
+        self.addDockWidget(Qt.RightDockWidgetArea, process_dock)
 
         console_dock = QDockWidget("控制台", self)
         console_dock.setFeatures(QDockWidget.DockWidgetMovable)
@@ -154,6 +173,11 @@ class VRobotEditor(QMainWindow):
         console_dock.setWidget(self.vConsoleView)
         self.addDockWidget(Qt.BottomDockWidgetArea, console_dock)
         self.vConsoleView.AttachConsole()
+
+    def __refreshWindowStyle(self):
+        """ """
+        with open(Config.PROJECT_QSS_PATH,"r") as pf:
+            self.setStyleSheet(pf.read())
 
     def __newScriptEvent(self):
         """"""
@@ -187,9 +211,13 @@ class VRobotEditor(QMainWindow):
 
     def __saveScriptEvent(self):
         """"""
-        if not self.vScriptEditor.SaveFile():
+        res = self.vScriptEditor.SaveFile()
+        if res < 0:
             return QMessageBox.critical(self, "提示", "保存文件失败")
-
+        elif res == 0:
+            return QMessageBox.information(self, "提示", "文件已保存")
+        else:
+            return QMessageBox.information(self, "提示", "文件保存成功")
     def __exitEvent(self):
         """"""
         self.close()
@@ -211,11 +239,25 @@ class VRobotEditor(QMainWindow):
         if config['mode'] == 1:
             str_cmd = ""
             for key,value in config.items():
+                if key == "script":
+                    if value is None:
+                        return QMessageBox.information(self, "提示", "请选择压测脚本")
+                    elif value.startswith("./"):
+                        value = value[2:]
+                elif key == "mode":
+                    continue
+                elif key == "host":
+                    if value == "127.0.0.1" and not self.vProcessMonitor.isPTCRunning():
+                        return QMessageBox.information(self, "提示", "需要先启动PTC中心")
                 str_cmd += "-{0} {1} ".format(key,value)
-            self.LaunchApp("./ConsoleMain.exe",str_cmd)
+            print(str_cmd)
+            app = os.path.join(Config.PROJECT_PATH,"ConsoleMain.exe")
+            self.LaunchApp(app, str_cmd)
         else:
             if self.__testThread is not None and self.__testThread.isRunning():
                 return QMessageBox.information(self, "提示", "压测运行中")
+            if config['host'] == "127.0.0.1" and not self.vProcessMonitor.isPTCRunning():
+                return QMessageBox.information(self, "提示", "需要先启动PTC中心")
             self.__testThread = VTestThread(config)
             self.__testThread.start()
 
@@ -223,6 +265,19 @@ class VRobotEditor(QMainWindow):
         if self.__testThread is None or not self.__testThread.isRunning():
             return QMessageBox.information(self, "提示", "压测已结束")
         self.__testThread.stop()
+
+    def __changeThemeStyle(self):
+        """ """
+        self.vScriptEditor.OpenFile(Config.PROJECT_QSS_PATH)
+
+    def __changePTCControllerCfg(self):
+        """ """
+        self.vScriptEditor.OpenFile(Config.PROJECT_PTC_CONFIG)
+
+    def __aboutEvent(self):
+        """ """
+        about_dlg = VAboutDialog(self)
+        about_dlg.show()
 
     def _on_open_file(self, filename):
         """"""
@@ -232,8 +287,5 @@ class VRobotEditor(QMainWindow):
     def LaunchApp(self, app , args=''):
         app_file = app.replace("\\", "/")
         app_root = app_file[:app_file.rfind("/")]
-        result = win32process.CreateProcess(app, args, None, None, 0,
-                    win32process.CREATE_NO_WINDOW, None, app_root,
-                    win32process.STARTUPINFO())
-        if not result or len(result) < 4:
-            return False
+        result = os.popen("{0} {1}".format(app, args))
+        print(result)

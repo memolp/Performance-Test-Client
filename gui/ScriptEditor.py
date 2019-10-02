@@ -59,6 +59,16 @@ class VScriptView(QsciScintilla):
         self.mTextLexer = QsciLexerTeX()
         self.setLexer(self.mTextLexer)
 
+    def setCssLexer(self):
+        """"""
+        self.mTextLexer = QsciLexerCSS()
+        self.setLexer(self.mTextLexer)
+
+    def setConfigLexer(self):
+        """"""
+        self.mTextLexer = QsciLexerProperties()
+        self.setLexer(self.mTextLexer)
+
     def setTextChanged(self):
         """"""
         self.textChanged.connect(self._on_text_changed)
@@ -92,7 +102,7 @@ class VScriptEditor(QTabWidget):
         :param parent:
         """
         super(VScriptEditor, self).__init__(parent)
-        self.setMinimumWidth(600)
+        self.setMinimumWidth(700)
         self.setMinimumHeight(500)
         self._cacheTabList = {}
 
@@ -112,6 +122,10 @@ class VScriptEditor(QTabWidget):
         # 设置语法
         if filename.endswith(".py"):
             textEditor.setPythonScriptLexer()
+        elif filename.endswith(".qss"):
+            textEditor.setCssLexer()
+        elif filename.endswith(".properties"):
+            textEditor.setConfigLexer()
         else:
             textEditor.setTextLexer()
         try:
@@ -132,17 +146,17 @@ class VScriptEditor(QTabWidget):
     def SaveFile(self):
         editor = self.currentWidget()
         if editor is None:
-            return False
+            return -1
         basename = editor.mFilename
         cache_tab = self._cacheTabList.get(basename, None)
         if cache_tab is None:
-            return False
+            return -2
         if cache_tab['save'] == 1:
-            return False
+            return 0
         editor.SaveToFile(cache_tab['filename'])
         cache_tab['save'] = 1
         self.setTabText(cache_tab['index'], "{0}".format(basename))
-        return True
+        return 1
 
     def _on_text_changed(self, basename):
         """ """

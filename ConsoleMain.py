@@ -20,23 +20,28 @@ def Main():
     入口
     :return:
     """
+    pf = open("tttt.txt","w")
     try:
+        pf.write("sss!!!\r\n")
         parse = argparse.ArgumentParser(prog="PTClient-console")
         parse.add_argument("-host", help="PTC Server host", type=str)
         parse.add_argument("-port", help="PTC Server port", type=int)
         parse.add_argument("-user", help="User Count", type=int)
         parse.add_argument("-tps", help="translation per second", type=int)
         parse.add_argument("-times", help="run test times", type=int, default=-1)
-        parse.add_argument("-script", help="script file abspath", type=int)
+        parse.add_argument("-script", help="script file abspath", type=str)
         parse.add_argument("-thread_net", help="thread of network num", type=int, default=4)
         parse.add_argument("-thread_tps", help="thread of tps num", type=int, default=10)
         parse.add_argument("-max_fd", help="select max fd num", type=int, default=500)
+        pf.write("s222ss!!!\r\n")
         # 解析
         argument = parse.parse_args()
+        pf.write("s44444ss!!!\r\n")
         RunConsole(argument)
+        pf.write("55555sss!!!\r\n")
     except Exception as e:
-        with open("est.txt","w") as pf:
             pf.write(e)
+    pf.close()
 
 def RunConsole(argument):
     """"""
