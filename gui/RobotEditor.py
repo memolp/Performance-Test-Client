@@ -47,7 +47,6 @@ author:
     JeffXun
 """
 import os
-import win32process
 import ConsoleMain
 
 from PyQt5.QtWidgets import *
@@ -58,6 +57,7 @@ from gui.ScriptEditor import VScriptEditor
 from gui.ConsoleView import VConsoleView
 from gui.RunTestDialog import RunTestDialog
 from gui.ProcessMonitor import VProcessMonitor
+from gui.VUserWidget import VUserStatusView
 from gui.AboutDialog import VAboutDialog
 from gui.AppIcons import *
 from core.utils.VTemplate import str_template
@@ -73,7 +73,24 @@ class VTestThread(QThread):
     def run(self):
         """"""
         ConsoleMain.RunConsole(self._config)
+
+    def __del__(self):
+        """"""
         del self._config
+
+    def GetTestConfig(self):
+        """
+        获取测试配置
+        :return:
+        """
+        return self._config
+
+    def Stop(self):
+        """
+        停止
+        :return:
+        """
+        ConsoleMain.StopConsole()
 
 
 class VRobotEditor(QMainWindow):
@@ -145,6 +162,10 @@ class VRobotEditor(QMainWindow):
         _theme_ac = QAction(QIcon(QPixmap(":icos/theme.png")),"主题编辑", self)
         _theme_ac.triggered.connect(self.__changeThemeStyle)
         _toolmenu.addAction(_theme_ac)
+
+        _uvser_ac = QAction(QIcon(QPixmap(":icos/user.png")), "压测用户", self)
+        _uvser_ac.triggered.connect(self.__showUserStatus)
+        _toolmenu.addAction(_uvser_ac)
 
         _helpmenu = _menuBar.addMenu("帮助")
         _about_ac = QAction(QIcon(QPixmap(":icos/about.png")),"关于", self)
@@ -303,7 +324,7 @@ class VRobotEditor(QMainWindow):
     def __stopTestEvent(self):
         if self.__testThread is None or not self.__testThread.isRunning():
             return QMessageBox.information(self, "提示", "压测已结束")
-        self.__testThread.stop()
+        self.__testThread.Stop()
 
     def __changeThemeStyle(self):
         """ """
@@ -312,6 +333,13 @@ class VRobotEditor(QMainWindow):
     def __changePTCControllerCfg(self):
         """ """
         self.vScriptEditor.OpenFile(Config.PROJECT_PTC_CONFIG)
+
+    def __showUserStatus(self):
+        """ """
+        if self.__testThread is None:
+            return QMessageBox.critical(self, "提示", "需要运行在线压测后方可查看")
+        user_dlg = VUserStatusView(self, self.__testThread.GetTestConfig())
+        user_dlg.exec()
 
     def __aboutEvent(self):
         """ """

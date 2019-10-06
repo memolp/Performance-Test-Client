@@ -45,6 +45,7 @@ class RunTestDialog(QDialog):
         self.setFixedWidth(400)
         self.setFixedHeight(240)
 
+        self.mTestScript = test_script
         self.mNomalWidget = self._create_test_options(os.path.basename(test_script))
         self.mDetailsWidget = self._create_detail_options()
         self.mBtnsWidget = self._create_btns()
@@ -59,6 +60,12 @@ class RunTestDialog(QDialog):
 
         self.mTestFlag = False
 
+    _help_of_mode = """
+    在线模式：
+        即通过IDE运行压测客户端，由于对性能会产生影响，仅在调试或者少量用户时使用。
+    离线模式：
+        即在控制台运行压测客户端，可以提高压测客户端的性能，但有些功能将无法支持。
+    """
     def _create_test_options(self,test_script_name):
         """"""
         _normalWidget = QWidget()
@@ -72,21 +79,25 @@ class RunTestDialog(QDialog):
         self.mTestModeCombox = QComboBox()
         self.mTestModeCombox.setObjectName("combox-mode")
         self.mTestModeCombox.addItems(["在线模式", "离线模式"])
+        self.mTestModeCombox.setToolTip(self._help_of_mode)
         _gLayout.addWidget(self.mTestModeCombox, 2, 2)
 
         _gLayout.addWidget(QLabel("用户数量:"), 3, 1)
         self.mTestUserInput = QLineEdit("50")
         self.mTestUserInput.setObjectName("input-user")
+        self.mTestUserInput.setToolTip("用户数量：即压测的用户总数，或者为在线用户总数")
         _gLayout.addWidget(self.mTestUserInput, 3, 2)
 
         _gLayout.addWidget(QLabel("压测轮次:"), 4, 1)
         self.mTestRoundInput = QLineEdit("-1")
         self.mTestRoundInput.setObjectName("input-round")
+        self.mTestRoundInput.setToolTip("压测轮次：即执行多少次并发，在每秒并发前提下也就是压测的时间")
         _gLayout.addWidget(self.mTestRoundInput, 4, 2)
 
         _gLayout.addWidget(QLabel("并发TPS:"), 5, 1)
         self.mTestTpsInput = QLineEdit("1")
         self.mTestTpsInput.setObjectName("input-tps")
+        self.mTestTpsInput.setToolTip("并发TPS：即尽量每秒有多少用户执行指定的事物行为(尽量在于每秒是否有足够的用户可以参与并发)")
         _gLayout.addWidget(self.mTestTpsInput, 5, 2)
 
         _normalWidget.setLayout(_gLayout)
@@ -100,25 +111,30 @@ class RunTestDialog(QDialog):
         _gLayout.addWidget(QLabel("PTC服务IP:"), 1, 1)
         self.mTestPTCHostInput = QLineEdit("127.0.0.1")
         self.mTestPTCHostInput.setObjectName('input-host')
+        self.mTestPTCHostInput.setToolTip("压测高并发网络服务IP，即PerformanceController.jar程序的地址")
         _gLayout.addWidget(self.mTestPTCHostInput, 1, 2)
         _gLayout.addWidget(QLabel("PTC服务端口:"), 1, 3)
         self.mTestPTCPortInput = QLineEdit("7090")
         self.mTestPTCPortInput.setObjectName('input-port')
+        self.mTestPTCPortInput.setToolTip("压测高并发网络服务端口，即PerformanceController.jar程序的端口")
         _gLayout.addWidget(self.mTestPTCPortInput, 1, 4)
 
         _gLayout.addWidget(QLabel("线程用户数:"), 2, 1)
         self.mTestThreadFDNumInput = QLineEdit("500")
         self.mTestThreadFDNumInput.setObjectName('input-thread-fd')
+        self.mTestThreadFDNumInput.setToolTip("由于select有socket数量限制，此配置用于指定限制的数量")
         _gLayout.addWidget(self.mTestThreadFDNumInput, 2, 2)
 
         _gLayout.addWidget(QLabel("网络线程数:"), 3, 1)
         self.mTestNetThreadNumInput = QLineEdit("{0}".format(os.cpu_count()))
         self.mTestNetThreadNumInput.setObjectName('input-thread-net')
+        self.mTestNetThreadNumInput.setToolTip("定于网络线程池的数量，执行网络数据接收(默认为CPU核数)")
         _gLayout.addWidget(self.mTestNetThreadNumInput, 3, 2)
 
         _gLayout.addWidget(QLabel("并发线程数:"), 4, 1)
         self.mTestTpsThreadNumInput = QLineEdit("{0}".format(os.cpu_count()))
         self.mTestTpsThreadNumInput.setObjectName('input-tps-net')
+        self.mTestTpsThreadNumInput.setToolTip("定于并发线程池的数量，执行用户并发(默认为CPU核数)")
         _gLayout.addWidget(self.mTestTpsThreadNumInput, 4, 2)
 
         _details_widget.setLayout(_gLayout)
@@ -177,7 +193,8 @@ class RunTestDialog(QDialog):
         config['user'] = int(self.__get_ele_text(self.mTestUserInput, "0"))
         config['tps'] = int(self.__get_ele_text(self.mTestTpsInput, "0"))
         config['times'] = int(self.__get_ele_text(self.mTestRoundInput,"-1"))
-        config['script'] = self.__get_ele_text(self.mTestScriptLabel, None)
+        config['script'] = self.mTestScript
+        config['index'] = 0
         config['thread_net'] = int(self.__get_ele_text(self.mTestNetThreadNumInput, "4"))
         config['max_fd'] = int(self.__get_ele_text(self.mTestThreadFDNumInput, "500"))
         config['thread_tps'] = int(self.__get_ele_text(self.mTestTpsThreadNumInput, "10"))

@@ -38,6 +38,7 @@ import argparse
 from core.net.VSocketMgr import VSocketMgr
 from core.vuser.VUserMgr import VUserMgr
 from core.utils import Loader
+from core.utils import VLog
 
 
 def Main():
@@ -51,6 +52,7 @@ def Main():
         parse.add_argument("-port", help="PTC Server port", type=int)
         parse.add_argument("-user", help="User Count", type=int)
         parse.add_argument("-tps", help="translation per second", type=int)
+        parse.add_argument("-index", help="User index", type=int, default=0)
         parse.add_argument("-times", help="run test times", type=int, default=-1)
         parse.add_argument("-script", help="script file abspath", type=str)
         parse.add_argument("-thread_net", help="thread of network num", type=int, default=4)
@@ -74,18 +76,28 @@ def RunConsole(argument):
     # 压测脚本
     script_file = argument.script
     if not os.path.exists(script_file):
+        VLog.Error("[PTC] Test Script {0} not exist!",script_file)
         return
     # 添加压测脚本目录
     sys.path.append(os.path.dirname(__file__))
     # 加载压测脚本
     module = Loader.LoadModule(script_file)
     if module is None:
+        VLog.Error("[PTC] Load Script {0} Error!", script_file)
         return
     # 网络线程组启动
     VSocketMgr.GetInstance().CreateServer(module, max_select_fd)
     # 用户管理启动
-    VUserMgr.GetInstance().CreateVUser(module, argument.user, argument.tps)
+    VUserMgr.GetInstance().CreateVUser(module, argument.user, argument.tps, argument.index)
     VUserMgr.GetInstance().Start()
+
+def GetRunUsers():
+    """"""
+    return VUserMgr.GetInstance().GetAllUsers()
+
+def StopConsole():
+    """"""
+    VUserMgr.GetInstance().Stop()
 
 def LocalTest():
     """

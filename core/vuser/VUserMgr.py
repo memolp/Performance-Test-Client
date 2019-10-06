@@ -68,22 +68,39 @@ class VUserMgr:
         self.__threadExecutor = None
         self.__index = 0
         self.__random = VUtils.Random()
+        self.__testRunning = False
 
-    def CreateVUser(self, script, count, tps):
+    def GetAllUsers(self):
+        """
+        返回用户列表
+        :return:
+        """
+        return self.__vuserList
+
+    def Stop(self):
+        """
+        停止测试
+        :return:
+        """
+        self.__testRunning = False
+
+    def CreateVUser(self, script, count, tps, index=0):
         """
         创建压测用户
         :param script: 压测脚本
         :param count: 用户数量
         :param tps: 并发数
+        :param index: 起始标记
         :return:
         """
         self.__script = script
         self.__userCount = count
         self.__tps = tps
-
+        # 清除旧数据
+        self.__vuserList.clear()
         # 创建用户
         for i in range(count):
-            user = VUser(i)
+            user = VUser(i + index)
             user.SetScene(self.__script.CreateScene(user))
             self.__vuserList.append(user)
 
@@ -123,12 +140,10 @@ class VUserMgr:
         定时线程
         :return:
         """
-        while True:
+        while self.__testRunning:
             start_time = time.time()
             # 事务信息
             transaltion_info = {}
-            pf = open("test.html", "w")
-            pf.write("<ul>\r\n")
             # 用户列表
             for vuser in self.__vuserList:
                 try:
@@ -142,12 +157,9 @@ class VUserMgr:
                         callback(start_time)
                 except Exception as e:
                     VLog.Trace(e)
-
                 # 统计事务
                 self.CulTranslation(vuser, transaltion_info)
-                pf.write("<li>UID:{0} STATUS:{1}</li>\r\n".format(vuser.GetUID(), vuser.TaskFinish()))
-            pf.write("</ul>\r\n")
-            pf.close()
+
             #针对统计的事务进行打印输出
             for key,transinfo in transaltion_info.items():
                 doing = transinfo["doing"]
@@ -181,7 +193,7 @@ class VUserMgr:
         """
         VLog.Info("[PTC] Wait Client Init Completed ......")
         size = len(self.__vuserList)
-        while True:
+        while self.__testRunning:
             count = 0
             for vuser in self.__vuserList:
                 if vuser.GetInitCompleted():
@@ -199,6 +211,7 @@ class VUserMgr:
         :param delay:
         :return:
         """
+        self.__testRunning = True
         # 启动定时器线程
         self._start_tick_thread()
         VLog.Info("[PTC] Call VUser OnInit ............................")
@@ -213,7 +226,7 @@ class VUserMgr:
         VLog.Info("[PTC] Begin Concurrence ............................")
         # 主循环
         round_count = 0
-        while self.RUN_TEST_TIMES == -1 or (round_count < self.RUN_TEST_TIMES):
+        while self.__testRunning and (self.RUN_TEST_TIMES == -1 or (round_count < self.RUN_TEST_TIMES)):
             start_time = time.time()
             users = self.__random.poll(self.__vuserList, self.__tps, lambda x : x.TaskFinish())
             if len(users) < self.__tps:

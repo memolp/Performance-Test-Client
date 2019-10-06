@@ -123,6 +123,17 @@ class VUser(object):
         """
         return abs(VUtils.GetHashCode(value))
 
+    def GetStateLabel(self):
+        """
+        获取当前user的状态
+        :return:
+        """
+        if not self.__initCompleted:
+            return "Init"
+        if self.__useBusy:
+            return "running"
+        return "wait"
+
     def GetInitCompleted(self):
         """
         返回初始化完成
