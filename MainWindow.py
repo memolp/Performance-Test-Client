@@ -38,9 +38,10 @@ from gui.RobotEditor import VRobotEditor
 import gui.Config as Config
 
 Config.PROJECT_PATH = os.path.dirname(__file__)
-Config.PROJECT_TEST_PATH = os.path.join(Config.PROJECT_PATH,"script/")
-Config.PROJECT_QSS_PATH = os.path.join(Config.PROJECT_PATH,"style.qss")
-Config.PROJECT_PTC_CONFIG = os.path.join(Config.PROJECT_PATH,"config.properties")
+Config.PROJECT_TEST_PATH = os.path.join(Config.PROJECT_PATH, "script/")
+Config.PROJECT_QSS_PATH = os.path.join(Config.PROJECT_PATH, "style.qss")
+Config.PROJECT_PTC_CONFIG = os.path.join(Config.PROJECT_PATH, "config.properties")
+sys.path.append(Config.PROJECT_PATH)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
