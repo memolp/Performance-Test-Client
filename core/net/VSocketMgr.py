@@ -65,7 +65,7 @@ class VSocketMgr:
         self.__serverList = []
         self.__script = None
         self.__random = VUtils.Random()
-        self.__executor = ThreadPool.ThreadExecutor(self.MAX_SELECT_TASK_NUM)
+        self.__executor = None
 
     def CreateServer(self, script, select_num):
         """
@@ -75,6 +75,8 @@ class VSocketMgr:
         :return:
         """
         self.__script = script
+        self.__executor = ThreadPool.ThreadExecutor(self.MAX_SELECT_TASK_NUM)
+        self.__serverList = []
         # 创建指定数量的sock server
         for i in range(select_num):
             sel = VSelector()
@@ -116,6 +118,13 @@ class VSocketMgr:
             selector.run()
         except Exception as e:
             VLog.Trace(e)
+
+    def Stop(self):
+        """
+        停止
+        :return:
+        """
+        self.__executor.stop()
 
 
 class VSelector:

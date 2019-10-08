@@ -90,13 +90,13 @@ class ThreadExecutor:
         :param kwargs:
         :return:
         """
-        t = time.time() * 1000
+        # t = time.time() * 1000
         task = VTask(fn, *args, **kwargs)
         self.__tasks.put(task, False)
         self._adjust_thread_count()
-        cast = time.time() * 1000 - t
-        if cast > 20:
-            print("submit cast time > 20ms >>>>:::::{0}ms".format(cast))
+        # cast = time.time() * 1000 - t
+        # if cast > 20:
+        #     print("submit cast time > 20ms >>>>:::::{0}ms".format(cast))
         return task
 
     def create(self, fn, *args, **kwargs):
@@ -112,6 +112,13 @@ class ThreadExecutor:
         self.__tasks.put(task, False)
         self._adjust_thread_count()
         return task
+
+    def stop(self):
+        """
+        停止
+        :return:
+        """
+        self.__tasks.put(None)
 
     def _adjust_thread_count(self):
         """ """
@@ -129,14 +136,15 @@ class ThreadExecutor:
         while True:
             try:
                 task = self.__tasks.get(block=True)
-                t = time.time() * 1000
+                # t = time.time() * 1000
                 if task is None:
+                    self.__tasks.put(None)
                     break
                 task.run()
                 if task.mRoll:
                     self.__tasks.put(task)
             except queue.Empty:
                 pass
-            cast = time.time() * 1000 - t
-            if cast > 900:
-                print("{0}_worker  cast time > 100ms >>>>:::::{1}ms".format(self.__thread_name,cast))
+            # cast = time.time() * 1000 - t
+            # if cast > 900:
+            #     print("{0}_worker  cast time > 100ms >>>>:::::{1}ms".format(self.__thread_name,cast))

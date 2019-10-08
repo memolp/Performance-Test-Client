@@ -36,7 +36,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
-PTC_CLIENT_PROCESS_NAME = "ConsoleMain.exe"
+PTC_CLIENT_PROCESS_NAME = "PTC_Console.exe"
 PTC_CENTER_PROCESS_NAME = "PerformanceController.jar"
 
 class VProcessMonitor(QWidget):

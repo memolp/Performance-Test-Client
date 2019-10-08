@@ -82,6 +82,8 @@ class VUserMgr:
         停止测试
         :return:
         """
+        # 线程池停止
+        self.__threadExecutor.stop()
         self.__testRunning = False
 
     def CreateVUser(self, script, count, tps, index=0):
@@ -244,7 +246,8 @@ class VUserMgr:
                 VLog.Error("[PTC] Start function cost_time :{0}!!!!!!!!", cost_time)
             if cost_time < 1.0:
                 time.sleep(1.0 - cost_time)
-        VLog.Info("[PTC] Begin Concurrence ............................end")
+
+        VLog.Info("[PTC] End Concurrence ............................")
 
     def OnInit(self, vuser):
         """

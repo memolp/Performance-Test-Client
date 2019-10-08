@@ -97,6 +97,7 @@ def GetRunUsers():
 
 def StopConsole():
     """"""
+    VSocketMgr.GetInstance().Stop()
     VUserMgr.GetInstance().Stop()
 
 def LocalTest():
