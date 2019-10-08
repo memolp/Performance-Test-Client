@@ -90,6 +90,7 @@ def RunConsole(argument):
     # 用户管理启动
     VUserMgr.GetInstance().CreateVUser(module, argument.user, argument.tps, argument.index)
     VUserMgr.GetInstance().Start()
+    StopConsole()
 
 def GetRunUsers():
     """"""
@@ -125,6 +126,7 @@ def LocalTest():
     # 用户管理启动
     VUserMgr.GetInstance().CreateVUser(module, user, tps)
     VUserMgr.GetInstance().Start(0.3)
+    StopConsole()
 
 if __name__ == "__main__":
     if len(sys.argv) <= 1:
