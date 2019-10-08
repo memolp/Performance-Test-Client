@@ -1,17 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="b3307ac1-c026-4fe2-8675-e340c74d7216" name="Default Changelist" comment="加入license">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="b3307ac1-c026-4fe2-8675-e340c74d7216" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/ConsoleMain.py" beforeDir="false" afterPath="$PROJECT_DIR$/ConsoleMain.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/buid_console_exe.bat" beforeDir="false" afterPath="$PROJECT_DIR$/buid_console_exe.bat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/buid_exe.bat" beforeDir="false" afterPath="$PROJECT_DIR$/buid_exe.bat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/net/VSocketMgr.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/net/VSocketMgr.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/utils/threadpool.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/utils/threadpool.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/vuser/VUserMgr.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/vuser/VUserMgr.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gui/ProcessMonitor.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/ProcessMonitor.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/release/ConsoleMain.exe" beforeDir="false" afterPath="$PROJECT_DIR$/release/ConsoleMain.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/release/MainWindow.exe" beforeDir="false" afterPath="$PROJECT_DIR$/release/MainWindow.exe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/release/PTC_Console.exe" beforeDir="false" afterPath="$PROJECT_DIR$/release/PTC_Console.exe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/release/PTC_IDE.exe" beforeDir="false" afterPath="$PROJECT_DIR$/release/PTC_IDE.exe" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -45,11 +38,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/MainWindow.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="116">
-              <caret line="25" column="8" selection-start-line="25" selection-start-column="8" selection-end-line="25" selection-end-column="8" />
+            <state relative-caret-position="405">
+              <caret line="48" column="17" selection-start-line="48" selection-start-column="17" selection-end-line="48" selection-end-column="17" />
             </state>
           </provider>
         </entry>
@@ -57,8 +50,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ConsoleMain.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="337">
-              <caret line="99" column="33" selection-start-line="99" selection-start-column="29" selection-end-line="99" selection-end-column="33" />
+            <state relative-caret-position="456">
+              <caret line="108" column="38" selection-start-line="108" selection-start-column="38" selection-end-line="108" selection-end-column="38" />
               <folding>
                 <element signature="e#1169#1178#0" expanded="true" />
               </folding>
@@ -84,11 +77,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/core/vuser/VUserMgr.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="433">
-              <caret line="249" column="69" selection-start-line="249" selection-start-column="69" selection-end-line="249" selection-end-column="69" />
+            <state relative-caret-position="450">
+              <caret line="253" column="17" selection-start-line="253" selection-start-column="17" selection-end-line="253" selection-end-column="17" />
             </state>
           </provider>
         </entry>
@@ -150,6 +143,11 @@
     </replaceStrings>
   </component>
   <component name="Git.Settings">
+    <option name="PREVIOUS_COMMIT_AUTHORS">
+      <list>
+        <option value="memolp &lt;memolp@163.com&gt;" />
+      </list>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
@@ -201,17 +199,17 @@
         <option value="$PROJECT_DIR$/gui/VUserWidget.py" />
         <option value="$PROJECT_DIR$/gui/RobotEditor.py" />
         <option value="$PROJECT_DIR$/gui/RunTestDialog.py" />
-        <option value="$PROJECT_DIR$/ConsoleMain.py" />
         <option value="$PROJECT_DIR$/core/net/VSocketMgr.py" />
-        <option value="$PROJECT_DIR$/core/vuser/VUserMgr.py" />
         <option value="$PROJECT_DIR$/core/utils/threadpool.py" />
         <option value="$PROJECT_DIR$/gui/ProcessMonitor.py" />
+        <option value="$PROJECT_DIR$/ConsoleMain.py" />
+        <option value="$PROJECT_DIR$/core/vuser/VUserMgr.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="421" />
-    <option name="y" value="115" />
+    <option name="x" value="603" />
+    <option name="y" value="117" />
     <option name="width" value="1314" />
     <option name="height" value="890" />
   </component>
@@ -434,7 +432,7 @@
       <workItem from="1569996886776" duration="5060000" />
       <workItem from="1570183424330" duration="1498000" />
       <workItem from="1570332753483" duration="8603000" />
-      <workItem from="1570536832043" duration="2744000" />
+      <workItem from="1570536832043" duration="4988000" />
     </task>
     <task id="LOCAL-00001" summary="提交优化">
       <created>1569418889371</created>
@@ -492,14 +490,21 @@
       <option name="project" value="LOCAL" />
       <updated>1570001529241</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="编译版本v1.0">
+      <created>1570541219914</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1570541219914</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="84244000" />
+    <option name="totallyTimeSpent" value="86488000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="421" y="115" width="1314" height="890" extended-state="1" />
+    <frame x="603" y="117" width="1314" height="890" extended-state="1" />
     <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.20261942" />
@@ -535,7 +540,8 @@
     <MESSAGE value="gui 界面功能完善" />
     <MESSAGE value="合入gui界面功能" />
     <MESSAGE value="加入license" />
-    <option name="LAST_COMMIT_MESSAGE" value="加入license" />
+    <MESSAGE value="编译版本v1.0" />
+    <option name="LAST_COMMIT_MESSAGE" value="编译版本v1.0" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Performance_Test_Client$ConsoleMain.coverage" NAME="ConsoleMain Coverage Results" MODIFIED="1569507727507" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
@@ -796,23 +802,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ConsoleMain.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="337">
-          <caret line="99" column="33" selection-start-line="99" selection-start-column="29" selection-end-line="99" selection-end-column="33" />
-          <folding>
-            <element signature="e#1169#1178#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/core/vuser/VUserMgr.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="433">
-          <caret line="249" column="69" selection-start-line="249" selection-start-column="69" selection-end-line="249" selection-end-column="69" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/core/utils/threadpool.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="371">
@@ -836,8 +825,25 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/MainWindow.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="116">
-          <caret line="25" column="8" selection-start-line="25" selection-start-column="8" selection-end-line="25" selection-end-column="8" />
+        <state relative-caret-position="405">
+          <caret line="48" column="17" selection-start-line="48" selection-start-column="17" selection-end-line="48" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ConsoleMain.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="456">
+          <caret line="108" column="38" selection-start-line="108" selection-start-column="38" selection-end-line="108" selection-end-column="38" />
+          <folding>
+            <element signature="e#1169#1178#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/core/vuser/VUserMgr.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="450">
+          <caret line="253" column="17" selection-start-line="253" selection-start-column="17" selection-end-line="253" selection-end-column="17" />
         </state>
       </provider>
     </entry>
