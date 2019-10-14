@@ -36,11 +36,11 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
-PTC_CLIENT_PROCESS_NAME = "PTC_Console.exe"
-PTC_CENTER_PROCESS_NAME = "PerformanceController.jar"
+import gui.Config as Config
 
 class VProcessMonitor(QWidget):
     """"""
+
     def __init__(self, parent=None):
         """"""
         super(VProcessMonitor, self).__init__(parent)
@@ -86,11 +86,11 @@ class VProcessMonitor(QWidget):
         for proc in psutil.process_iter():
             try:
                 pinfo = proc.as_dict(attrs=['pid', 'name'])
-                if pinfo['name'].lower() == PTC_CLIENT_PROCESS_NAME.lower():
+                if pinfo['name'].lower() == Config.PTC_CLIENT_PROCESS_NAME.lower():
                     self.mPTCClient.addItem("客户端:{0}".format(pinfo['pid']))
                 elif pinfo['name'].lower() == "java.exe":
                     cmd = proc.cmdline()
-                    if PTC_CENTER_PROCESS_NAME in cmd:
+                    if Config.PTC_CENTER_PROCESS_NAME in cmd:
                         self.mPTCRunning = True
                         self.mPTCProcess.setText("已启动:{0}".format(pinfo['pid']))
                         self.mPTCControl.setText("停止")
@@ -111,7 +111,7 @@ class VProcessMonitor(QWidget):
             self.mPTCControl.setObjectName("btn-start")
             self.mPTCRunning = False
         else:
-            cmd = "java -jar {0}".format(PTC_CENTER_PROCESS_NAME)
+            cmd = "java -jar {0}".format(Config.PTC_CENTER_PROCESS_NAME)
             result = os.popen(cmd)
             print(result)
 

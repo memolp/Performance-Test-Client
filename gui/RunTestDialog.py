@@ -88,17 +88,23 @@ class RunTestDialog(QDialog):
         self.mTestUserInput.setToolTip("用户数量：即压测的用户总数，或者为在线用户总数")
         _gLayout.addWidget(self.mTestUserInput, 3, 2)
 
+        _gLayout.addWidget(QLabel("并发TPS:"), 3, 3)
+        self.mTestTpsInput = QLineEdit("1")
+        self.mTestTpsInput.setObjectName("input-tps")
+        self.mTestTpsInput.setToolTip("并发TPS：即尽量每秒有多少用户执行指定的事物行为(尽量在于每秒是否有足够的用户可以参与并发)")
+        _gLayout.addWidget(self.mTestTpsInput, 3, 4)
+
         _gLayout.addWidget(QLabel("压测轮次:"), 4, 1)
         self.mTestRoundInput = QLineEdit("-1")
         self.mTestRoundInput.setObjectName("input-round")
         self.mTestRoundInput.setToolTip("压测轮次：即执行多少次并发，在每秒并发前提下也就是压测的时间")
         _gLayout.addWidget(self.mTestRoundInput, 4, 2)
 
-        _gLayout.addWidget(QLabel("并发TPS:"), 5, 1)
-        self.mTestTpsInput = QLineEdit("1")
-        self.mTestTpsInput.setObjectName("input-tps")
-        self.mTestTpsInput.setToolTip("并发TPS：即尽量每秒有多少用户执行指定的事物行为(尽量在于每秒是否有足够的用户可以参与并发)")
-        _gLayout.addWidget(self.mTestTpsInput, 5, 2)
+        _gLayout.addWidget(QLabel("用户初始化间隔:"), 4, 3)
+        self.mUserInitDelayInput = QLineEdit("0.0")
+        self.mUserInitDelayInput.setObjectName("input-init-delay")
+        self.mUserInitDelayInput.setToolTip("设置用户初始化的时间间隔，初始化以并发数进行")
+        _gLayout.addWidget(self.mUserInitDelayInput, 4, 4)
 
         _normalWidget.setLayout(_gLayout)
         return _normalWidget
@@ -136,12 +142,6 @@ class RunTestDialog(QDialog):
         self.mTestTpsThreadNumInput.setObjectName('input-tps-net')
         self.mTestTpsThreadNumInput.setToolTip("定于并发线程池的数量，执行用户并发(默认为CPU核数)")
         _gLayout.addWidget(self.mTestTpsThreadNumInput, 4, 2)
-
-        _gLayout.addWidget(QLabel("用户初始化间隔:"), 5, 1)
-        self.mUserInitDelayInput = QLineEdit("0.0")
-        self.mUserInitDelayInput.setObjectName("input-init-delay")
-        self.mUserInitDelayInput.setToolTip("设置用户初始化的时间间隔，初始化以并发数进行")
-        _gLayout.addWidget(self.mUserInitDelayInput, 5, 2)
 
         _details_widget.setLayout(_gLayout)
         return _details_widget

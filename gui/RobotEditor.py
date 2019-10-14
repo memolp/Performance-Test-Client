@@ -311,7 +311,8 @@ class VRobotEditor(QMainWindow):
                         return QMessageBox.information(self, "提示", "需要先启动PTC中心")
                 str_cmd += "-{0} {1} ".format(key,value)
             print(str_cmd)
-            app = os.path.join(Config.PROJECT_PATH,"ConsoleMain.exe")
+            app = os.path.join(Config.PROJECT_PATH,Config.PTC_CLIENT_PROCESS_NAME)
+            self.vConsoleView.DetachConsole()
             self.LaunchApp(app, str_cmd)
         else:
             if self.__testThread is not None and self.__testThread.isRunning():

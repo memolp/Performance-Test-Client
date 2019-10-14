@@ -37,3 +37,7 @@ PROJECT_TEST_PATH = ""
 PROJECT_QSS_PATH = ""
 #
 PROJECT_PTC_CONFIG = ""
+#
+PTC_CLIENT_PROCESS_NAME = "PTC_Console.exe"
+#
+PTC_CENTER_PROCESS_NAME = "PerformanceController.jar"

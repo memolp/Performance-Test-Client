@@ -5,8 +5,12 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ConsoleMain.py" beforeDir="false" afterPath="$PROJECT_DIR$/ConsoleMain.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/PTC_IDE.spec" beforeDir="false" afterPath="$PROJECT_DIR$/PTC_IDE.spec" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/vuser/VUser.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/vuser/VUser.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gui/Config.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/Config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gui/ProcessMonitor.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/ProcessMonitor.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gui/RobotEditor.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/RobotEditor.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/gui/RunTestDialog.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/RunTestDialog.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/release/PTC_Console.exe" beforeDir="false" afterPath="$PROJECT_DIR$/release/PTC_Console.exe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/release/PTC_IDE.exe" beforeDir="false" afterPath="$PROJECT_DIR$/release/PTC_IDE.exe" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -16,24 +20,6 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/core/vuser/VUser.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="388">
-              <caret line="440" column="46" selection-start-line="440" selection-start-column="46" selection-end-line="440" selection-end-column="46" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/gui/VUserWidget.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="612">
-              <caret line="39" column="37" selection-start-line="39" selection-start-column="31" selection-end-line="39" selection-end-column="37" />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/gui/ScriptEditor.py">
           <provider selected="true" editor-type-id="text-editor">
@@ -49,8 +35,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/gui/RobotEditor.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="5525">
-              <caret line="341" column="20" selection-start-line="341" selection-start-column="20" selection-end-line="341" selection-end-column="20" />
+            <state relative-caret-position="395">
+              <caret line="234" column="8" selection-start-line="234" selection-start-column="8" selection-end-line="234" selection-end-column="8" />
               <folding>
                 <element signature="e#2387#2396#0" expanded="true" />
               </folding>
@@ -61,11 +47,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/MainWindow.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="236">
-              <caret line="27" column="7" selection-start-line="27" selection-start-column="7" selection-end-line="27" selection-end-column="7" />
-              <folding>
-                <element signature="e#1139#1148#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="320">
+              <caret line="43" column="35" selection-start-line="43" selection-start-column="23" selection-end-line="43" selection-end-column="35" />
             </state>
           </provider>
         </entry>
@@ -73,26 +56,11 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ConsoleMain.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="490">
-              <caret line="128" column="29" lean-forward="true" selection-start-line="128" selection-start-column="29" selection-end-line="128" selection-end-column="29" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/gui/Config.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="456">
-              <caret line="28" column="11" selection-start-line="28" selection-start-column="11" selection-end-line="28" selection-end-column="11" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/gui/FileExplorer.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="272">
-              <caret line="28" column="11" selection-start-line="28" selection-start-column="11" selection-end-line="28" selection-end-column="11" />
+            <state relative-caret-position="350">
+              <caret line="92" column="29" selection-start-line="92" selection-start-column="29" selection-end-line="92" selection-end-column="29" />
+              <folding>
+                <element signature="e#1169#1178#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -100,8 +68,17 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/gui/RunTestDialog.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="476">
-              <caret line="203" column="25" selection-start-line="203" selection-start-column="16" selection-end-line="203" selection-end-column="25" />
+            <state relative-caret-position="409">
+              <caret line="63" column="9" selection-start-line="63" selection-start-column="9" selection-end-line="63" selection-end-column="9" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/gui/ConsoleView.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="235">
+              <caret line="59" column="21" selection-start-line="59" selection-start-column="8" selection-end-line="59" selection-end-column="21" />
             </state>
           </provider>
         </entry>
@@ -109,8 +86,38 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/core/vuser/VUserMgr.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="473">
-              <caret line="223" column="33" lean-forward="true" selection-start-line="223" selection-start-column="33" selection-end-line="223" selection-end-column="33" />
+            <state relative-caret-position="316">
+              <caret line="250" selection-start-line="250" selection-end-line="250" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/core/utils/threadpool.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="2414">
+              <caret line="145" column="31" selection-start-line="145" selection-start-column="31" selection-end-line="145" selection-end-column="31" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/gui/Config.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="405">
+              <caret line="40" selection-start-line="40" selection-end-line="40" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/gui/ProcessMonitor.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="1765">
+              <caret line="109" column="42" selection-start-line="109" selection-start-column="42" selection-end-line="109" selection-end-column="42" />
+              <folding>
+                <element signature="e#1136#1145#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -139,6 +146,7 @@
       <find>__threadExecutor</find>
       <find>)</find>
       <find>MAX_SELECT_TASK_NUM</find>
+      <find>AttachConsole</find>
     </findStrings>
     <replaceStrings>
       <replace>struct.pack</replace>
@@ -177,8 +185,6 @@
         <option value="$PROJECT_DIR$/gui/ThemeStyleDialog.py" />
         <option value="$PROJECT_DIR$/MainWindow.py" />
         <option value="$PROJECT_DIR$/gui/__init__.py" />
-        <option value="$PROJECT_DIR$/gui/Config.py" />
-        <option value="$PROJECT_DIR$/gui/ConsoleView.py" />
         <option value="$PROJECT_DIR$/gui/FileExplorer.py" />
         <option value="$PROJECT_DIR$/gui/ScriptEditor.py" />
         <option value="$PROJECT_DIR$/core/__init__.py" />
@@ -198,20 +204,22 @@
         <option value="$PROJECT_DIR$/gui/AboutDialog.py" />
         <option value="$PROJECT_DIR$/script/test.py" />
         <option value="$PROJECT_DIR$/gui/VUserWidget.py" />
-        <option value="$PROJECT_DIR$/gui/RobotEditor.py" />
         <option value="$PROJECT_DIR$/core/net/VSocketMgr.py" />
         <option value="$PROJECT_DIR$/core/utils/threadpool.py" />
-        <option value="$PROJECT_DIR$/gui/ProcessMonitor.py" />
         <option value="$PROJECT_DIR$/core/vuser/VUserMgr.py" />
         <option value="$PROJECT_DIR$/core/vuser/VUser.py" />
-        <option value="$PROJECT_DIR$/ConsoleMain.py" />
         <option value="$PROJECT_DIR$/gui/RunTestDialog.py" />
+        <option value="$PROJECT_DIR$/gui/Config.py" />
+        <option value="$PROJECT_DIR$/gui/ProcessMonitor.py" />
+        <option value="$PROJECT_DIR$/ConsoleMain.py" />
+        <option value="$PROJECT_DIR$/gui/ConsoleView.py" />
+        <option value="$PROJECT_DIR$/gui/RobotEditor.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="315" />
-    <option name="y" value="102" />
+    <option name="x" value="353" />
+    <option name="y" value="100" />
     <option name="width" value="1314" />
     <option name="height" value="890" />
   </component>
@@ -226,6 +234,29 @@
             <path>
               <item name="Performance-Test-Client" type="b2602c69:ProjectViewProjectNode" />
               <item name="Performance-Test-Client" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="Performance-Test-Client" type="b2602c69:ProjectViewProjectNode" />
+              <item name="Performance-Test-Client" type="462c0819:PsiDirectoryNode" />
+              <item name="core" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="Performance-Test-Client" type="b2602c69:ProjectViewProjectNode" />
+              <item name="Performance-Test-Client" type="462c0819:PsiDirectoryNode" />
+              <item name="core" type="462c0819:PsiDirectoryNode" />
+              <item name="net" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="Performance-Test-Client" type="b2602c69:ProjectViewProjectNode" />
+              <item name="Performance-Test-Client" type="462c0819:PsiDirectoryNode" />
+              <item name="core" type="462c0819:PsiDirectoryNode" />
+              <item name="utils" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="Performance-Test-Client" type="b2602c69:ProjectViewProjectNode" />
+              <item name="Performance-Test-Client" type="462c0819:PsiDirectoryNode" />
+              <item name="core" type="462c0819:PsiDirectoryNode" />
+              <item name="vuser" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="Performance-Test-Client" type="b2602c69:ProjectViewProjectNode" />
@@ -480,13 +511,12 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="86488000" />
+    <option name="totallyTimeSpent" value="90157000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="421" y="115" width="1314" height="890" extended-state="0" />
-    <editor active="true" />
+    <frame x="353" y="100" width="1314" height="890" extended-state="0" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.20261942" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.20261942" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -496,7 +526,7 @@
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info anchor="bottom" id="Version Control" order="7" />
+      <window_info anchor="bottom" id="Version Control" order="7" weight="0.32904884" />
       <window_info anchor="bottom" id="Terminal" order="8" />
       <window_info anchor="bottom" id="Event Log" order="9" sideWeight="0.50047755" side_tool="true" weight="0.37931034" />
       <window_info anchor="bottom" id="Python Console" order="10" />
@@ -524,7 +554,7 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Performance_Test_Client$ConsoleMain.coverage" NAME="ConsoleMain Coverage Results" MODIFIED="1569507727507" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/Performance_Test_Client$MainWindow.coverage" NAME="MainWindow Coverage Results" MODIFIED="1570540279870" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Performance_Test_Client$MainWindow.coverage" NAME="MainWindow Coverage Results" MODIFIED="1571057371219" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Performance_Test_Client$VAttrObject.coverage" NAME="VAttrObject Coverage Results" MODIFIED="1569768556683" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/core/utils" />
     <SUITE FILE_PATH="coverage/Performance_Test_Client$tttt.coverage" NAME="tttt Coverage Results" MODIFIED="1569595200210" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
@@ -564,13 +594,6 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/gui/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="476">
-          <caret line="28" column="11" selection-start-line="28" selection-start-column="11" selection-end-line="28" selection-end-column="11" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/gui/ConsoleView.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="476">
           <caret line="28" column="11" selection-start-line="28" selection-start-column="11" selection-end-line="28" selection-end-column="11" />
@@ -700,22 +723,15 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/core/net/VSocketMgr.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="163">
+        <state relative-caret-position="1530">
           <caret line="98" column="16" selection-start-line="98" selection-start-column="16" selection-end-line="98" selection-end-column="16" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/core/utils/threadpool.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="371">
+        <state relative-caret-position="2414">
           <caret line="145" column="31" selection-start-line="145" selection-start-column="31" selection-end-line="145" selection-end-column="31" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/gui/ProcessMonitor.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1227">
-          <caret line="38" column="38" selection-start-line="38" selection-start-column="38" selection-end-line="38" selection-end-column="38" />
         </state>
       </provider>
     </entry>
@@ -743,40 +759,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/gui/RobotEditor.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="5525">
-          <caret line="341" column="20" selection-start-line="341" selection-start-column="20" selection-end-line="341" selection-end-column="20" />
-          <folding>
-            <element signature="e#2387#2396#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/MainWindow.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="236">
-          <caret line="27" column="7" selection-start-line="27" selection-start-column="7" selection-end-line="27" selection-end-column="7" />
-          <folding>
-            <element signature="e#1139#1148#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/core/vuser/VUser.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="388">
-          <caret line="440" column="46" selection-start-line="440" selection-start-column="46" selection-end-line="440" selection-end-column="46" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/gui/Config.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="456">
-          <caret line="28" column="11" selection-start-line="28" selection-start-column="11" selection-end-line="28" selection-end-column="11" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/gui/FileExplorer.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="272">
@@ -784,24 +766,75 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/core/vuser/VUser.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="252">
+          <caret line="443" column="54" selection-start-line="443" selection-start-column="54" selection-end-line="443" selection-end-column="54" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/MainWindow.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="320">
+          <caret line="43" column="35" selection-start-line="43" selection-start-column="23" selection-end-line="43" selection-end-column="35" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/gui/ProcessMonitor.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1765">
+          <caret line="109" column="42" selection-start-line="109" selection-start-column="42" selection-end-line="109" selection-end-column="42" />
+          <folding>
+            <element signature="e#1136#1145#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/gui/Config.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="405">
+          <caret line="40" selection-start-line="40" selection-end-line="40" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/gui/RunTestDialog.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="476">
-          <caret line="203" column="25" selection-start-line="203" selection-start-column="16" selection-end-line="203" selection-end-column="25" />
+        <state relative-caret-position="409">
+          <caret line="63" column="9" selection-start-line="63" selection-start-column="9" selection-end-line="63" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/gui/ConsoleView.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="235">
+          <caret line="59" column="21" selection-start-line="59" selection-start-column="8" selection-end-line="59" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/gui/RobotEditor.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="395">
+          <caret line="234" column="8" selection-start-line="234" selection-start-column="8" selection-end-line="234" selection-end-column="8" />
+          <folding>
+            <element signature="e#2387#2396#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ConsoleMain.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="490">
-          <caret line="128" column="29" lean-forward="true" selection-start-line="128" selection-start-column="29" selection-end-line="128" selection-end-column="29" />
+        <state relative-caret-position="350">
+          <caret line="92" column="29" selection-start-line="92" selection-start-column="29" selection-end-line="92" selection-end-column="29" />
+          <folding>
+            <element signature="e#1169#1178#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/core/vuser/VUserMgr.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="473">
-          <caret line="223" column="33" lean-forward="true" selection-start-line="223" selection-start-column="33" selection-end-line="223" selection-end-column="33" />
+        <state relative-caret-position="316">
+          <caret line="250" selection-start-line="250" selection-end-line="250" />
         </state>
       </provider>
     </entry>
