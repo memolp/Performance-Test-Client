@@ -54,6 +54,7 @@ def Main():
         parse.add_argument("-tps", help="translation per second", type=int)
         parse.add_argument("-index", help="User index", type=int, default=0)
         parse.add_argument("-times", help="run test times", type=int, default=-1)
+        parse.add_argument("-initdelay", help="init user delay", type=int, default=0.1)
         parse.add_argument("-script", help="script file abspath", type=str)
         parse.add_argument("-thread_net", help="thread of network num", type=int, default=4)
         parse.add_argument("-thread_tps", help="thread of tps num", type=int, default=10)
@@ -89,7 +90,7 @@ def RunConsole(argument):
     VSocketMgr.GetInstance().CreateServer(module, max_select_fd)
     # 用户管理启动
     VUserMgr.GetInstance().CreateVUser(module, argument.user, argument.tps, argument.index)
-    VUserMgr.GetInstance().Start()
+    VUserMgr.GetInstance().Start(argument.initdelay)
     StopConsole()
 
 def GetRunUsers():

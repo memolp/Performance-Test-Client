@@ -446,7 +446,7 @@ class VUser(object):
             else:
                 self.__cachePacketData.clear()
                 VLog.Error("[PTC] Recv Packet Index ERROR! uid:{0} local:{1} server:{2} sock:{3}",
-                           self.__uid, receive_index + 1, idx, sock_id)
+                           self.__uid, receive_index, idx, sock_id)
                 break
             self.__cachePacketIndex[sock_id]["ReceiveIdx"] += 1
             # 读取剩余内容

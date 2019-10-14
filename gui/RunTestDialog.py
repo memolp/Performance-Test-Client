@@ -137,6 +137,12 @@ class RunTestDialog(QDialog):
         self.mTestTpsThreadNumInput.setToolTip("定于并发线程池的数量，执行用户并发(默认为CPU核数)")
         _gLayout.addWidget(self.mTestTpsThreadNumInput, 4, 2)
 
+        _gLayout.addWidget(QLabel("用户初始化间隔:"), 5, 1)
+        self.mUserInitDelayInput = QLineEdit("0.0")
+        self.mUserInitDelayInput.setObjectName("input-init-delay")
+        self.mUserInitDelayInput.setToolTip("设置用户初始化的时间间隔，初始化以并发数进行")
+        _gLayout.addWidget(self.mUserInitDelayInput, 5, 2)
+
         _details_widget.setLayout(_gLayout)
         return _details_widget
 
@@ -195,6 +201,7 @@ class RunTestDialog(QDialog):
         config['times'] = int(self.__get_ele_text(self.mTestRoundInput,"-1"))
         config['script'] = self.mTestScript
         config['index'] = 0
+        config['initdelay'] = float(self.__get_ele_text(self.mUserInitDelayInput, "0.0"))
         config['thread_net'] = int(self.__get_ele_text(self.mTestNetThreadNumInput, "4"))
         config['max_fd'] = int(self.__get_ele_text(self.mTestThreadFDNumInput, "500"))
         config['thread_tps'] = int(self.__get_ele_text(self.mTestTpsThreadNumInput, "10"))
