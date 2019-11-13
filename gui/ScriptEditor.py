@@ -67,8 +67,16 @@ class VScriptView(QsciScintilla):
         self.setMarginWidth(0, 30)
         # 换行后自动缩进
         self.setAutoIndent(True)
+        # tab宽度是4
+        self.setTabWidth(4)
         # 支持中文字符
         self.setUtf8(True)
+        # 显示空格点和\t的箭头
+        self.setWhitespaceVisibility(True)
+        # 设置空格的宽度
+        self.setWhitespaceSize(2)
+        # 设置用空格代替tab
+        self.setIndentationsUseTabs(False)
 
         self.mNeedSaved = False
 
