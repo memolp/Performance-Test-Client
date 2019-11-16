@@ -58,6 +58,7 @@ def Main():
         parse.add_argument("-script", help="script file abspath", type=str)
         parse.add_argument("-thread_net", help="thread of network num", type=int, default=4)
         parse.add_argument("-thread_tps", help="thread of tps num", type=int, default=10)
+        parse.add_argument("-recv_buff", help="network recv buffer size", type=int, default=1024*1024)
         parse.add_argument("-max_fd", help="select max fd num", type=int, default=500)
         # 解析
         argument = parse.parse_args()
@@ -69,6 +70,7 @@ def RunConsole(argument):
     """"""
     max_select_fd = math.ceil(argument.user / argument.max_fd)
     VSocketMgr.MAX_SELECT_TASK_NUM = argument.thread_net
+    VSocketMgr.RECV_MAX_BUFF_SIZE = argument.recv_buff
     VSocketMgr.PTC_HOST = argument.host
     VSocketMgr.PTC_PORT = argument.port
     VUserMgr.RUN_TEST_TIMES = argument.times

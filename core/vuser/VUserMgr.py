@@ -131,7 +131,7 @@ class VUserMgr:
             # 已完成的事务 需要计算最大耗时和平均耗时
             if len(trans) > 0:
                 transaltion_info[key]["max"].append(max(trans, key=lambda x: x.Cost()))
-                transaltion_info[key]["avg"].append(avg(trans, key=lambda x: x.Cost()))
+                transaltion_info[key]["avg"].append(avg(trans, key=lambda x: x.Cost(), percent=0.2))
         return transaltion_info
 
     # 事务统计打印的格式
@@ -167,8 +167,8 @@ class VUserMgr:
                 doing = transinfo["doing"]
                 done = transinfo["done"]
                 rate = done / (done + doing) * 100
-                max_v = max(transinfo["max"],key=lambda x:x.Cost()).Cost() if len(transinfo["max"]) >0 else -1
-                avg_v = avg(transinfo["avg"]) if len(transinfo["avg"]) >0 else -1
+                max_v = max(transinfo["max"], key=lambda x:x.Cost()).Cost() if len(transinfo["max"]) >0 else -1
+                avg_v = avg(transinfo["avg"], percent=0.1) if len(transinfo["avg"]) >0 else -1
                 VLog.Info(self.TRANSLATION_INFO, key, doing, done, round(max_v, 2), round(avg_v, 2), round(rate, 2))
 
             # 花费时间正常不会超过1秒

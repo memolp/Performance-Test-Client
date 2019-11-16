@@ -2,6 +2,7 @@
 
 
 from core.vuser.VUserScene import VUserScene
+from core.utils.VLog import VLog
 
 
 class NewScene(VUserScene):
@@ -14,6 +15,7 @@ class NewScene(VUserScene):
         :param name: 场景名
         """
         super(NewScene,self).__init__(vuser,name)
+        VLog.Debug("aaaaa")
 
     def OnMessage(self, sock_id, packet):
         """
@@ -61,8 +63,6 @@ class NewScene(VUserScene):
         """
         self.vUser.SetInitCompleted(True)
         self.vUser.SetBusy(False)
-
-
 
 
 def CreateScene(vuser):

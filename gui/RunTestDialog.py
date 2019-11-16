@@ -134,13 +134,19 @@ class RunTestDialog(QDialog):
         _gLayout.addWidget(QLabel("网络线程数:"), 3, 1)
         self.mTestNetThreadNumInput = QLineEdit("{0}".format(os.cpu_count()))
         self.mTestNetThreadNumInput.setObjectName('input-thread-net')
-        self.mTestNetThreadNumInput.setToolTip("定于网络线程池的数量，执行网络数据接收(默认为CPU核数)")
+        self.mTestNetThreadNumInput.setToolTip("定义网络线程池的数量，执行网络数据接收(默认为CPU核数)")
         _gLayout.addWidget(self.mTestNetThreadNumInput, 3, 2)
+
+        _gLayout.addWidget(QLabel("网络Buffer:"), 3, 3)
+        self.mTestNetworkBuffInput = QLineEdit("{0}".format(1024*1024))
+        self.mTestNetworkBuffInput.setObjectName("input-buff-net")
+        self.mTestNetworkBuffInput.setToolTip("定义网络buff缓存大小，过小会有丢数据的风险")
+        _gLayout.addWidget(self.mTestNetworkBuffInput, 3, 4)
 
         _gLayout.addWidget(QLabel("并发线程数:"), 4, 1)
         self.mTestTpsThreadNumInput = QLineEdit("{0}".format(os.cpu_count()))
         self.mTestTpsThreadNumInput.setObjectName('input-tps-net')
-        self.mTestTpsThreadNumInput.setToolTip("定于并发线程池的数量，执行用户并发(默认为CPU核数)")
+        self.mTestTpsThreadNumInput.setToolTip("定义并发线程池的数量，执行用户并发(默认为CPU核数)")
         _gLayout.addWidget(self.mTestTpsThreadNumInput, 4, 2)
 
         _details_widget.setLayout(_gLayout)
@@ -206,6 +212,7 @@ class RunTestDialog(QDialog):
         config['max_fd'] = int(self.__get_ele_text(self.mTestThreadFDNumInput, "500"))
         config['thread_tps'] = int(self.__get_ele_text(self.mTestTpsThreadNumInput, "10"))
         config['mode'] = 0
+        config['recv_buff'] = int(self.__get_ele_text(self.mTestNetworkBuffInput, "102400"))
         if self.mTestModeCombox.currentText() == "离线模式":
             config['mode'] = 1
         return config

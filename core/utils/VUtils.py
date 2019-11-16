@@ -32,18 +32,34 @@ author:
 import random
 
 
-def avg(iter, key=None):
+def avg(iter, key=None, percent=0.0):
     """
     自定义求平均值
     :param iter:
     :param key:
+    :param percent: 去除百分比（将列表中的最大最小值去掉一定后再计算平均值）
     :return:
     """
     nlen = len(iter)
     if nlen == 0:
         return 0
+    # 要去除的数据
+    del_num = int(nlen * percent / 2)
+    if del_num >= nlen:
+        return 0
+
+    new_iter = iter
+    if percent > 0:
+        # 先转换成有序
+        new_iter = sorted(iter, key=key)
+
+    if del_num > 0:
+        new_iter = new_iter[del_num:-del_num]
+        
+    # 计算新的平均数
+    nlen = len(new_iter)
     total_v = 0
-    for i in iter:
+    for i in new_iter:
         if key is None:
             total_v += i
         else:
