@@ -1,0 +1,19 @@
+//这个是scene.json的配置说明，使用时需要去掉注释部分
+{
+  "host": "127.0.0.1",
+  "port": 7090,  //PTC的ip和端口
+  "thread_net": 4, //网络线程数量（线程池）
+  "thread_tps": 10, //并发线程数量（线程池）
+  "recv_buff": 1024000, //网络收包的size
+  "selector_num": 500, //selector的数量
+  "tps": 10, //并发数
+  "index": 0, //用户的起始编号（多个进程压测时使用）
+  "initdelay": 0, //初始化的间隔（按tps的数量进行初始化）
+  "scene":{
+      "user": 1000, //压测的用户数量  用户总数等于多个场景的user相加
+      "scripts": [  //压测的脚本---times表示这个脚本执行多少次后切换下一个脚本，max_times表示这个场景执行的最大次数
+        {"file": "script/LoginScene.py", "times": 100, "max_times": -1},
+        {"file": "script/LoginOutScene.py", "times": 100, "max_times": 100}
+      ]
+    }
+}

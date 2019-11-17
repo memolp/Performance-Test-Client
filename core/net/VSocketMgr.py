@@ -63,18 +63,15 @@ class VSocketMgr:
     def __init__(self):
         """"""
         self.__serverList = []
-        self.__script = None
         self.__random = VUtils.Random()
         self.__executor = None
 
-    def CreateServer(self, script, select_num):
+    def CreateServer(self, select_num):
         """
         创建server
-        :param script:
         :param select_num: select数量
         :return:
         """
-        self.__script = script
         self.__executor = ThreadPool.ThreadExecutor(self.MAX_SELECT_TASK_NUM)
         self.__serverList = []
         # 创建指定数量的sock server

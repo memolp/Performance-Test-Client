@@ -1,0 +1,16 @@
+{
+  "host": "127.0.0.1",
+  "port": 7090,
+  "thread_net": 4,
+  "thread_tps": 10,
+  "recv_buff": 1024000,
+  "selector_num": 2,
+  "user": 10,
+  "tps": 1,
+  "index": 0,
+  "initdelay": 1,
+  "scripts": [
+    {"file": "script/test.py", "times": 50, "max_times": 100},
+    {"file": "script/333.py", "times": 50, "max_times": 100}
+  ]
+}

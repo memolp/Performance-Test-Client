@@ -62,7 +62,6 @@ class VUserMgr:
     def __init__(self):
         """"""
         self.__vuserList = []
-        self.__script = None
         self.__userCount = 0
         self.__tps = 0
         self.__threadExecutor = None
@@ -86,16 +85,14 @@ class VUserMgr:
         self.__threadExecutor.stop()
         self.__testRunning = False
 
-    def CreateVUser(self, script, count, tps, index=0):
+    def CreateVUser(self, count, tps, index=0):
         """
         创建压测用户
-        :param script: 压测脚本
         :param count: 用户数量
         :param tps: 并发数
         :param index: 起始标记
         :return:
         """
-        self.__script = script
         self.__userCount = count
         self.__tps = tps
         # 清除旧数据
@@ -103,7 +100,6 @@ class VUserMgr:
         # 创建用户
         for i in range(count):
             user = VUser(i + index)
-            user.SetScene(self.__script.CreateScene(user))
             self.__vuserList.append(user)
 
         # 根据并发创建对应数量的线程池
@@ -207,19 +203,53 @@ class VUserMgr:
                 time.sleep(1.0)
         VLog.Info("[PTC] Wait Client Init Completed ......end")
 
-    def Start(self, delay=0.0):
+    def Start(self, script, delay=0.0):
         """
         启动
+        :param script:
         :param delay:
         :return:
         """
         self.__testRunning = True
         # 启动定时器线程
         self._start_tick_thread()
+        self.OnSceneRunning(script, self.__vuserList, delay, self.RUN_TEST_TIMES)
+
+    def MultiStart(self, delay, scenes):
+        """
+        多场景测试
+        :param delay:
+        :param scenes:
+        :return:
+        """
+        self.__testRunning = True
+        self._start_tick_thread()
+        index = 0
+        size = len(scenes)
+        while self.__testRunning and size > 0:
+            scene = scenes[index]
+            if scene['times'] < scene['max_times'] or scene['max_times'] == -1:
+                self.OnSceneRunning(scene['script'], self.__vuserList, delay, scene['times'])
+                scene['times'] *= 2
+            index += 1
+            if index >= size:
+                index = 0
+
+    def OnSceneRunning(self, script, userList, delay, times):
+        """
+        并发
+        :param script:
+        :param userList:
+        :param delay:
+        :param times:
+        :return:
+        """
         VLog.Info("[PTC] Call VUser OnInit ............................")
         # 调用初始化
-        for users in self.__random.taker(self.__vuserList, self.__tps):
-            [self.OnInit(user) for user in users]
+        for users in self.__random.taker(userList, self.__tps):
+            for user in users:
+                user.SetScene(script.CreateScene(user))
+                self.OnInit(user)
             if delay > 0:
                 time.sleep(delay)
         VLog.Info("[PTC] Call VUser OnInit ............................end")
@@ -228,9 +258,9 @@ class VUserMgr:
         VLog.Info("[PTC] Begin Concurrence ............................")
         # 主循环
         round_count = 0
-        while self.__testRunning and (self.RUN_TEST_TIMES == -1 or (round_count < self.RUN_TEST_TIMES)):
+        while self.__testRunning and (times == -1 or (round_count < times)):
             start_time = time.time()
-            users = self.__random.poll(self.__vuserList, self.__tps, lambda x : x.TaskFinish())
+            users = self.__random.poll(userList, self.__tps, lambda x: x.TaskFinish())
             if len(users) < self.__tps:
                 VLog.Info("[PTC] Concurrence TPS :{0} ,expect:{1}", len(users), self.__tps)
             # 执行任务
@@ -246,7 +276,6 @@ class VUserMgr:
                 VLog.Error("[PTC] Start function cost_time :{0}!!!!!!!!", cost_time)
             if cost_time < 1.0:
                 time.sleep(1.0 - cost_time)
-
         VLog.Info("[PTC] End Concurrence ............................")
 
     def OnInit(self, vuser):

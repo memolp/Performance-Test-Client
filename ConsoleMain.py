@@ -32,6 +32,7 @@ author:
 
 import os
 import sys
+import json
 import math
 import argparse
 
@@ -89,10 +90,10 @@ def RunConsole(argument):
         VLog.Error("[PTC] Load Script {0} Error!", script_file)
         return
     # 网络线程组启动
-    VSocketMgr.GetInstance().CreateServer(module, max_select_fd)
+    VSocketMgr.GetInstance().CreateServer(max_select_fd)
     # 用户管理启动
-    VUserMgr.GetInstance().CreateVUser(module, argument.user, argument.tps, argument.index)
-    VUserMgr.GetInstance().Start(argument.initdelay)
+    VUserMgr.GetInstance().CreateVUser(argument.user, argument.tps, argument.index)
+    VUserMgr.GetInstance().Start(module, argument.initdelay)
     StopConsole()
 
 def GetRunUsers():
@@ -104,6 +105,35 @@ def StopConsole():
     VSocketMgr.GetInstance().Stop()
     VUserMgr.GetInstance().Stop()
 
+def MultiTest(sence_cfg):
+    """
+    综合场景压测
+    :param sence_cfg:
+    :return:
+    """
+    if not os.path.exists(sence_cfg):
+        VLog.Error("file {0} is not exist!", sence_cfg)
+        return
+    with open(sence_cfg, "rb") as pf:
+        scene_config = json.load(pf)
+    VSocketMgr.MAX_SELECT_TASK_NUM = scene_config['thread_net']
+    VSocketMgr.RECV_MAX_BUFF_SIZE = scene_config['recv_buff']
+    VSocketMgr.PTC_HOST = scene_config['host']
+    VSocketMgr.PTC_PORT = scene_config['port']
+    VUserMgr.MAX_THREAD_NUM = scene_config['thread_tps']
+    VSocketMgr.GetInstance().CreateServer(scene_config['selector_num'])
+    VUserMgr.GetInstance().CreateVUser(scene_config['user'], scene_config['tps'], scene_config['index'])
+    # 添加压测脚本目录
+    sys.path.append(os.path.dirname(__file__))
+    scenes = []
+    for script in scene_config['scripts']:
+        # 加载压测脚本
+        module = Loader.LoadModule(script['file'])
+        if module:
+            scene = {"script":module, "times": script['times'], "max_times":script['max_times']}
+            scenes.append(scene)
+    VUserMgr.GetInstance().MultiStart(scene_config['initdelay'], scenes)
+
 def LocalTest():
     """
     本地测试代码
@@ -113,6 +143,7 @@ def LocalTest():
     VSocketMgr.PTC_HOST = "127.0.0.1"
     VSocketMgr.PTC_PORT = 7090
     VUserMgr.RUN_TEST_TIMES = 900
+    VUserMgr.MAX_THREAD_NUM = 20
 
     # 压测脚本
     script_file = "./script/test.py"
@@ -122,17 +153,19 @@ def LocalTest():
     module = Loader.LoadModule(script_file)
     if module is None:
         return
-    user = 10000
-    tps  = 1000
+    user = 10
+    tps  = 1
     # 网络线程组启动
-    VSocketMgr.GetInstance().CreateServer(module, 20)
+    VSocketMgr.GetInstance().CreateServer(20)
     # 用户管理启动
-    VUserMgr.GetInstance().CreateVUser(module, user, tps)
-    VUserMgr.GetInstance().Start(0.3)
+    VUserMgr.GetInstance().CreateVUser(user, tps)
+    VUserMgr.GetInstance().Start(module,1)
     StopConsole()
 
 if __name__ == "__main__":
     if len(sys.argv) <= 1:
         LocalTest()
+    elif len(sys.argv) <= 2:
+        MultiTest(sys.argv[1])
     else:
         Main()

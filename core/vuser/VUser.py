@@ -75,6 +75,27 @@ class VUser(object):
         # [底层的]缓存未读取完的数据包
         self.__cachePacketData = Packet()
 
+    def ClearData(self):
+        """
+        清理數據
+        :return:
+        """
+        # 缓存存储数据
+        self.__cacheCustomData = {}
+        self.__scene = None
+        self.__task = None
+        self.__states = {}
+        self.__currentState = None
+        self.__initCompleted = False
+        self.__useBusy = True
+        self.__stateCallArgs = []
+        self.__toState = None
+        # 缓存发送的序列号 按照sockid存储，互不影响
+        self.__cachePacketIndex = {}
+        self.__tickCalback = None
+        # [底层的]缓存未读取完的数据包
+        self.__cachePacketData = Packet()
+
     def GetScene(self):
         """
         获取场景对象
@@ -89,6 +110,8 @@ class VUser(object):
         :return:
         """
         if isinstance(scene, VUserScene):
+            VLog.Debug("VUser {0} Change Scene {1}", self.__uid, scene.sceneName)
+            self.ClearData()
             self.__scene = scene
 
     def SetData(self, key, data):
