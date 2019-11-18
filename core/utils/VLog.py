@@ -33,13 +33,11 @@ import time
 import traceback
 
 
-class _interl_cls:
-    """日志等级"""
-    level = 0
-
 class VLog:
     """日志"""
     level = 0
+    # 性能日志单独做一个开关
+    Performance_Log = False
 
     @staticmethod
     def setLevel(level):
@@ -108,7 +106,7 @@ class VLog:
         """
         if VLog.level <= 4:
             sLog = fmt.format(*args)
-            print("{0} [ERROR] {1}".format(round(time.time(), 3), sLog))
+            print("{0} [FATA] {1}".format(round(time.time(), 3), sLog))
 
     @staticmethod
     def Trace(msg):

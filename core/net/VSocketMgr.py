@@ -33,10 +33,12 @@ import time
 import math
 import selectors
 import threading
-import core.utils.VLog as VLog
+
 import core.utils.VUtils as VUtils
 import core.utils.threadpool as ThreadPool
+from concurrent.futures import ThreadPoolExecutor
 
+from core.utils.VLog import VLog
 from core.net.VSocket import VSocket
 
 
@@ -132,6 +134,7 @@ class VSelector:
 
     def run(self):
         """"""
+        begin_time = 0
         try:
             events = self.__selector.select(0.001)
         except OSError:
@@ -140,12 +143,20 @@ class VSelector:
         except Exception as e:
             VLog.Trace(e)
             return
+        if VLog.Performance_Log:
+            begin_time = time.time() * 1000
+
         for key, mask in events:
             func = key.data
             try:
                 func()
             except Exception as e:
                 VLog.Trace(e)
+
+        if VLog.Performance_Log:
+            cost = time.time() * 1000  - begin_time
+            if cost > 500:
+                VLog.Fatal("[PERFORMANCE] VSelector select with {0}ms", cost)
 
     def register(self, fileObj, mask, callback):
         """

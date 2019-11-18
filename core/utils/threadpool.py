@@ -35,6 +35,8 @@ import queue
 import time
 import threading
 
+from core.utils.VLog import VLog
+
 
 class VTask:
     INIT = 0
@@ -90,13 +92,9 @@ class ThreadExecutor:
         :param kwargs:
         :return:
         """
-        # t = time.time() * 1000
         task = VTask(fn, *args, **kwargs)
         self.__tasks.put(task, False)
         self._adjust_thread_count()
-        # cast = time.time() * 1000 - t
-        # if cast > 20:
-        #     print("submit cast time > 20ms >>>>:::::{0}ms".format(cast))
         return task
 
     def create(self, fn, *args, **kwargs):
@@ -133,18 +131,21 @@ class ThreadExecutor:
 
     def _worker(self):
         """ """
+        begin_time = time.time() * 1000
         while True:
             try:
                 task = self.__tasks.get(block=True)
-                # t = time.time() * 1000
+                if VLog.Performance_Log:
+                    begin_time = time.time() * 1000
                 if task is None:
                     self.__tasks.put(None)
                     break
                 task.run()
                 if task.mRoll:
                     self.__tasks.put(task)
+                if VLog.Performance_Log:
+                    cost = time.time() * 1000 - begin_time
+                    if cost > 900:
+                        VLog.Fatal("[PERFORMANCE] {0} work execute with {1} ms", self.__thread_name, cost)
             except queue.Empty:
                 pass
-            # cast = time.time() * 1000 - t
-            # if cast > 900:
-            #     print("{0}_worker  cast time > 100ms >>>>:::::{1}ms".format(self.__thread_name,cast))

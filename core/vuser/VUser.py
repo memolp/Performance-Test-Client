@@ -29,9 +29,10 @@ author:
     JeffXun
 """
 import time
-import core.utils.VLog as VLog
+
 import core.utils.VUtils as VUtils
 
+from core.utils.VLog import VLog
 from core.utils.Packet import Packet
 from core.net.VSocketMgr import VSocketMgr
 from core.utils.VTranslation import VTranslation
@@ -253,25 +254,14 @@ class VUser(object):
         """
         return self.__currentState
 
-    def SetTask(self, task):
-        """
-        设置执行任务
-        :param task:
-        :return:
-        """
-        del self.__task
-        self.__task = task
-
-    def TaskFinish(self):
+    def IsFinished(self):
         """
         返回任务是否完成
         :return:
         """
         if self.__useBusy:
             return False
-        if self.__task is None:
-            return True
-        return self.__task.done()
+        return True
 
     def SetBusy(self, bool):
         """
@@ -421,7 +411,9 @@ class VUser(object):
         :param data:
         :return:
         """
-        begin_time = time.time() * 1000
+        begin_time = 0
+        if VLog.Performance_Log:
+            begin_time = time.time() * 1000
         # 这里为什么会走VSocketMgr 主要是希望可以明确 这个返回是来自网络线程
         self.__cachePacketData.position = self.__cachePacketData.length()
         self.__cachePacketData.writeMulitBytes(data)
@@ -480,9 +472,10 @@ class VUser(object):
                 cdata = self.__cachePacketData.readMulitBytes(remaining)
                 self.__cachePacketData.reset(cdata)
             length = self.__cachePacketData.length()
-        cost_time = time.time() * 1000 - begin_time
-        if cost_time > 20:
-            VLog.Info("[PTC] OnReceice Cost Time:{0}ms UID:{1}", cost_time, self.__uid)
+        if VLog.Performance_Log:
+            cost_time = time.time() * 1000 - begin_time
+            if cost_time > 20:
+                VLog.Fatal("[PERFORMANCE] OnReceice Cost Time:{0}ms UID:{1}", cost_time, self.__uid)
 
     def __OnClose(self, sock_id):
         """

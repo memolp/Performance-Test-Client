@@ -31,13 +31,13 @@ author:
 
 import time
 import threading
-import core.utils.VLog as VLog
+
 import core.utils.VUtils as VUtils
 
-from concurrent.futures import ThreadPoolExecutor
+
 from core.vuser.VUser import VUser
 from core.utils.VUtils import *
-from core.utils.threadpool import ThreadExecutor
+from core.utils.VLog import VLog
 
 
 class VUserMgr:
@@ -47,7 +47,6 @@ class VUserMgr:
     _instance = None
     # 默认一直运行
     RUN_TEST_TIMES = -1
-    MAX_THREAD_NUM = 10
 
     @staticmethod
     def GetInstance():
@@ -64,7 +63,6 @@ class VUserMgr:
         self.__vuserList = []
         self.__userCount = 0
         self.__tps = 0
-        self.__threadExecutor = None
         self.__index = 0
         self.__random = VUtils.Random()
         self.__testRunning = False
@@ -81,8 +79,6 @@ class VUserMgr:
         停止测试
         :return:
         """
-        # 线程池停止
-        self.__threadExecutor.stop()
         self.__testRunning = False
 
     def CreateVUser(self, count, tps, index=0):
@@ -101,9 +97,6 @@ class VUserMgr:
         for i in range(count):
             user = VUser(i + index)
             self.__vuserList.append(user)
-
-        # 根据并发创建对应数量的线程池
-        self.__threadExecutor = ThreadExecutor(self.MAX_THREAD_NUM,threadname="Concurrence")
 
     def CulTranslation(self,vuser, transaltion_info):
         """
@@ -172,7 +165,7 @@ class VUserMgr:
             if cost_time < 1.0:
                 time.sleep(1.0 - cost_time)
             else:
-                VLog.Error("[PTC] TickerThread function cost_time :{0}!!!!!!!!", cost_time)
+                VLog.Fatal("[PERFORMANCE] TickerThread function cost_time :{0}!!!!!!!!", cost_time)
 
     def _start_tick_thread(self):
         """
@@ -228,7 +221,7 @@ class VUserMgr:
         size = len(scenes)
         while self.__testRunning and size > 0:
             scene = scenes[index]
-            if scene['times'] < scene['max_times'] or scene['max_times'] == -1:
+            if scene['times'] <= scene['max_times'] or scene['max_times'] == -1:
                 self.OnSceneRunning(scene['script'], self.__vuserList, delay, scene['times'])
                 scene['times'] *= 2
             index += 1
@@ -260,20 +253,19 @@ class VUserMgr:
         round_count = 0
         while self.__testRunning and (times == -1 or (round_count < times)):
             start_time = time.time()
-            users = self.__random.poll(userList, self.__tps, lambda x: x.TaskFinish())
+            users = self.__random.poll(userList, self.__tps, lambda x: x.IsFinished())
             if len(users) < self.__tps:
                 VLog.Info("[PTC] Concurrence TPS :{0} ,expect:{1}", len(users), self.__tps)
             # 执行任务
             for vuser in users:
-                task = self.__threadExecutor.submit(self.OnConcurrence, vuser, round_count)
-                vuser.SetTask(task)
+                self.OnConcurrence(vuser, round_count)
             # 每执行一轮，+1
             round_count += 1
             # 花费时间正常不会超过1秒
             cost_time = time.time() - start_time
             # 超过0.6就打印出来，防止sleep的问题影响并发
             if cost_time > 0.6:
-                VLog.Error("[PTC] Start function cost_time :{0}!!!!!!!!", cost_time)
+                VLog.Fatal("[PERFORMANCE] Start function cost_time :{0}!!!!!!!!", cost_time)
             if cost_time < 1.0:
                 time.sleep(1.0 - cost_time)
         VLog.Info("[PTC] End Concurrence ............................")

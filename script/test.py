@@ -3,7 +3,7 @@
 
 from core.vuser.VUserScene import VUserScene
 from core.utils.VLog import VLog
-
+import ctypes
 
 class NewScene(VUserScene):
     """
