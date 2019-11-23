@@ -88,10 +88,22 @@ class Packet(Endian):
         res = struct.unpack(fmt, self._readbuf(4))
         return res[0]
 
+    def readInt64(self):
+        """ """
+        fmt = "%sq" % self._isEndian()
+        res = struct.unpack(fmt, self._readbuf(8))
+        return res[0]
+
     def readUnsignedInt(self):
         """ """
         fmt = "%sI" % self._isEndian()
         res = struct.unpack(fmt, self._readbuf(4))
+        return res[0]
+
+    def readUnsignedInt64(self):
+        """ """
+        fmt = "%sQ" % self._isEndian()
+        res = struct.unpack(fmt, self._readbuf(8))
         return res[0]
 
     def readFloat(self):
@@ -150,9 +162,18 @@ class Packet(Endian):
         fmt = "%si" % self._isEndian()
         self._addbuf(struct.pack(fmt, value))
 
+    def writeInt64(self, value):
+        fmt = "%sq" % self._isEndian()
+        self._addbuf(struct.pack(fmt, value))
+
     def writeUnsignedInt(self, value):
         """ """
         fmt = "%sI" % self._isEndian()
+        self._addbuf(struct.pack(fmt, value))
+
+    def writeUnsignedInt64(self, value):
+        """ """
+        fmt = "%sQ" % self._isEndian()
         self._addbuf(struct.pack(fmt, value))
 
     def writeFloat(self,value):

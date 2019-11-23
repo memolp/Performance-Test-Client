@@ -69,8 +69,6 @@ class VUser(object):
         self.__toState = None
         # 同一个事务可能存在多个统计，需要字典中用列表标识
         self.__translationList = {}
-        # 缓存发送的序列号 按照sockid存储，互不影响
-        self.__cachePacketIndex = {}
         self.__tickCalback = None
         self.__finishTranslation = {}
         # [底层的]缓存未读取完的数据包
@@ -91,8 +89,6 @@ class VUser(object):
         self.__useBusy = True
         self.__stateCallArgs = []
         self.__toState = None
-        # 缓存发送的序列号 按照sockid存储，互不影响
-        self.__cachePacketIndex = {}
         self.__tickCalback = None
         # [底层的]缓存未读取完的数据包
         self.__cachePacketData = Packet()
@@ -319,7 +315,6 @@ class VUser(object):
         """
         # 先清除数据，这个也是坑
         #self.__cachePacketData.clear()
-        self.__cachePacketIndex[sockid] = {"SendIdx": 0, "ReceiveIdx": 0}
         packet = self.CreatePacket()
         packet.writeUnsignedByte(socktype)
         packet.writeUnsignedShort(len(host))
@@ -338,11 +333,6 @@ class VUser(object):
         if broadcast:
             packet = self.CreatePacket()
             self.__SendPacket(packet, sockid, self.MSG_DISCONNECT)
-        # 更改序号
-        if sockid not in self.__cachePacketIndex:
-            VLog.Error("[PTC] uid:{0} sockid :{1} index is not exist!", self.__uid, sockid)
-            return
-        self.__cachePacketIndex[sockid] = {"SendIdx": 0, "ReceiveIdx": 0}
 
 
     def __SendPacket(self, packet, sockid , msgid):
@@ -353,9 +343,6 @@ class VUser(object):
         :param msgid:
         :return:
         """
-        if sockid not in self.__cachePacketIndex:
-            VLog.Error("[PTC] uid:{0} sockid :{1} index is not exist!", self.__uid, sockid)
-            return
         # 发送的数据需要再重新包装
         sendPacket = Packet()
         # 起始标记
@@ -365,9 +352,7 @@ class VUser(object):
         # 用户vuer
         sendPacket.writeUnsignedInt(self.__uid)
         # 发送的序列号
-        index = self.__cachePacketIndex[sockid]["SendIdx"]
-        sendPacket.writeUnsignedInt(index)
-        self.__cachePacketIndex[sockid]["SendIdx"] += 1
+        sendPacket.writeInt64(int(time.time()*1000))
         # sockid
         sendPacket.writeUnsignedByte(sockid)
         # 消息ID
@@ -392,9 +377,6 @@ class VUser(object):
         :param sockid:
         :return:
         """
-        if sockid not in self.__cachePacketIndex:
-            VLog.Error("[PTC] uid:{0} sockid :{1} index is not exist!", self.__uid, sockid)
-            return
         # 发送数据
         self.__SendPacket(packet,sockid,self.MSG_PACKET)
 
