@@ -34,7 +34,7 @@ import core.utils.VUtils as VUtils
 
 from core.utils.VLog import VLog
 from core.utils.Packet import Packet
-from core.net.VSocketMgr import VSocketMgr
+#from core.net.VSocketMgr import VSocketMgr
 from core.utils.VTranslation import VTranslation
 from core.vuser.VUserScene import VUserScene
 
@@ -46,7 +46,7 @@ class VUser(object):
     MSG_CONNECT = 1000
     MSG_DISCONNECT = 1001
     MSG_PACKET = 2000
-    PACKET_HEAD_LEN = 16
+    PACKET_HEAD_LEN = 20
 
     def __init__(self, uid,):
         """
@@ -59,8 +59,6 @@ class VUser(object):
         self.__uid = uid
         self.__scene = None
         self.__task = None
-        # 链接socket
-        self.__udpsocket = VSocketMgr.GetInstance().CreateVSocket(self)
         self.__states = {}
         self.__currentState = None
         self.__initCompleted = False
@@ -364,7 +362,7 @@ class VUser(object):
         # 写入正确的协议长度 不包含起始标记和长度自己
         sendPacket.writeUnsignedInt(sendPacket.length()-5)
         # 发送数据
-        self.__udpsocket.OnSend(sendPacket.getvalue())
+        VSocketMgr.GetInstance().SendPacket(sendPacket.getvalue())
         # 清除
         del packet
         del sendPacket
@@ -386,78 +384,6 @@ class VUser(object):
         :return: 返回一个Packet对象
         """
         return Packet(data)
-
-    def OnReceive(self,data):
-        """
-        收到数据
-        :param data:
-        :return:
-        """
-        begin_time = 0
-        if VLog.Performance_Log:
-            begin_time = time.time() * 1000
-        # 这里为什么会走VSocketMgr 主要是希望可以明确 这个返回是来自网络线程
-        self.__cachePacketData.position = self.__cachePacketData.length()
-        self.__cachePacketData.writeMulitBytes(data)
-        self.__cachePacketData.position = 0
-        length = self.__cachePacketData.length()
-        # 这里的分包只是分底层组装的包，具体服务器返回的协议内容有没有完整，需要OnMessage中自己判断
-        while length - self.__cachePacketData.position > 0:
-            # 长度不足
-            if length - self.__cachePacketData.position < VUser.PACKET_HEAD_LEN:
-                break
-            # 开始标记不对
-            head_flag = self.__cachePacketData.readUnsignedByte() & 0xFF
-            if head_flag != 0xEF:
-                self.__cachePacketData.clear()
-                VLog.Error("[PTC] Recv Packet Head ERROR! uid:{0} flag:{1}", self.__uid, head_flag)
-                break
-            pack_len = self.__cachePacketData.readUnsignedInt()
-            # 协议长度不足
-            if length - self.__cachePacketData.position < pack_len:
-                self.__cachePacketData.position = length
-                break
-            # 检查uid
-            uid = self.__cachePacketData.readUnsignedInt()
-            if uid != self.__uid:
-                VLog.Error("[PTC] Recv Packet UID ERROR! uid:{0} ser:{1}", self.__uid, uid)
-            # 检查序号
-            idx = self.__cachePacketData.readUnsignedInt()
-            sock_id = self.__cachePacketData.readUnsignedByte()
-            msg_id = self.__cachePacketData.readUnsignedShort()
-            if sock_id not in self.__cachePacketIndex:
-                receive_index = None
-            else:
-                receive_index = self.__cachePacketIndex[sock_id]["ReceiveIdx"]
-            if receive_index is not None and  receive_index+1 == idx:
-                if msg_id == self.MSG_DISCONNECT:
-                    self.__OnClose(sock_id)
-                elif msg_id == self.MSG_PACKET:
-                    rdata = self.__cachePacketData.readMulitBytes(pack_len - (VUser.PACKET_HEAD_LEN - 5))
-                    self.__OnMessage(sock_id, Packet(rdata))
-                elif msg_id == self.MSG_CONNECT:
-                    self.__OnConnected(sock_id)
-                else:
-                    VLog.Error("[PTC] Recv Packet MsgID ERROR! msg:{0} uid:{1}", msg_id, self.__uid)
-            # 协议序号错了
-            else:
-                self.__cachePacketData.clear()
-                VLog.Error("[PTC] Recv Packet Index ERROR! uid:{0} local:{1} server:{2} sock:{3}",
-                           self.__uid, receive_index, idx, sock_id)
-                break
-            self.__cachePacketIndex[sock_id]["ReceiveIdx"] += 1
-            # 读取剩余内容
-            remaining = length - self.__cachePacketData.position
-            if remaining <= 0:
-                self.__cachePacketData.clear()
-            else:
-                cdata = self.__cachePacketData.readMulitBytes(remaining)
-                self.__cachePacketData.reset(cdata)
-            length = self.__cachePacketData.length()
-        if VLog.Performance_Log:
-            cost_time = time.time() * 1000 - begin_time
-            if cost_time > 20:
-                VLog.Fatal("[PERFORMANCE] OnReceice Cost Time:{0}ms UID:{1}", cost_time, self.__uid)
 
     def __OnClose(self, sock_id):
         """

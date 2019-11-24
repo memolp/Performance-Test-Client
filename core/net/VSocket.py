@@ -45,10 +45,10 @@ class VSocket:
         :param port:
         """
         # 创建一个udp套接字
-        self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.__sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.__sock.setsockopt(socket.SOL_SOCKET,socket.SO_SNDBUF,maxbufszie)
         self.__sock.setsockopt(socket.SOL_SOCKET,socket.SO_RCVBUF,maxbufszie)
-        self.__sock.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
+        #self.__sock.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
         self.__vuser = vuser
         self.__server = host
         self.__port  = port
@@ -69,7 +69,7 @@ class VSocket:
         :return:
         """
         try:
-            data = self.__sock.recv(self.__maxbufszie)
+            data, address = self.__sock.recvfrom(self.__maxbufszie)
         except ConnectionResetError:
             self.Close()
             return
@@ -89,7 +89,7 @@ class VSocket:
         :return:
         """
         try:
-            self.__sock.sendall(buff)
+            self.__sock.sendto(buff,(self.__server, self.__port))
         except Exception as e:
             VLog.Trace(e)
 

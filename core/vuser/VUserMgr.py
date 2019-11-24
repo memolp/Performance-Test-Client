@@ -38,6 +38,8 @@ import core.utils.VUtils as VUtils
 from core.vuser.VUser import VUser
 from core.utils.VUtils import *
 from core.utils.VLog import VLog
+import core.utils.threadpool as ThreadPool
+from concurrent.futures import ThreadPoolExecutor
 
 
 class VUserMgr:
@@ -60,7 +62,7 @@ class VUserMgr:
 
     def __init__(self):
         """"""
-        self.__vuserList = []
+        self.__vuserList = DictArray()
         self.__userCount = 0
         self.__tps = 0
         self.__index = 0
@@ -73,6 +75,14 @@ class VUserMgr:
         :return:
         """
         return self.__vuserList
+
+    def GetUserByUID(self, uid):
+        """
+        获取user
+        :param uid:
+        :return:
+        """
+        return self.__vuserList.get(uid)
 
     def Stop(self):
         """
@@ -206,7 +216,7 @@ class VUserMgr:
         self.__testRunning = True
         # 启动定时器线程
         self._start_tick_thread()
-        self.OnSceneRunning(script, self.__vuserList, delay, self.RUN_TEST_TIMES)
+        self.OnSceneRunning(script, delay, self.RUN_TEST_TIMES)
 
     def MultiStart(self, delay, scenes):
         """
@@ -222,13 +232,13 @@ class VUserMgr:
         while self.__testRunning and size > 0:
             scene = scenes[index]
             if scene['times'] <= scene['max_times'] or scene['max_times'] == -1:
-                self.OnSceneRunning(scene['script'], self.__vuserList, delay, scene['times'])
+                self.OnSceneRunning(scene['script'], delay, scene['times'])
                 scene['times'] *= 2
             index += 1
             if index >= size:
                 index = 0
 
-    def OnSceneRunning(self, script, userList, delay, times):
+    def OnSceneRunning(self, script, delay, times):
         """
         并发
         :param script:
@@ -239,7 +249,7 @@ class VUserMgr:
         """
         VLog.Info("[PTC] Call VUser OnInit ............................")
         # 调用初始化
-        for users in self.__random.taker(userList, self.__tps):
+        for users in self.__random.taker(self.__vuserList, self.__tps):
             for user in users:
                 user.SetScene(script.CreateScene(user))
                 self.OnInit(user)
@@ -253,7 +263,7 @@ class VUserMgr:
         round_count = 0
         while self.__testRunning and (times == -1 or (round_count < times)):
             start_time = time.time()
-            users = self.__random.poll(userList, self.__tps, lambda x: x.IsFinished())
+            users = self.__random.poll(self.__vuserList, self.__tps, lambda x: x.IsFinished())
             if len(users) < self.__tps:
                 VLog.Info("[PTC] Concurrence TPS :{0} ,expect:{1}", len(users), self.__tps)
             # 执行任务
@@ -292,3 +302,5 @@ class VUserMgr:
             vuser.GetScene().OnConcurrence(count)
         except Exception as e:
             VLog.Trace(e)
+
+

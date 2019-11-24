@@ -167,6 +167,42 @@ class Random:
             index += num
 
 
+class DictArray(object):
+    """ """
+    def __init__(self):
+        """ """
+        self.__Users = {}
+        self.__size = 0
+
+    def __iter__(self):
+        index = 0
+        while index < self.__size:
+            yield self.__Users[index]
+            index += 1
+
+    def append(self, user):
+        """"""
+        self.__Users[self.__size] = user
+        self.__size += 1
+
+    def clear(self):
+        """"""
+        self.__Users.clear()
+        self.__Users = {}
+        self.__size = 0
+
+    def __len__(self):
+        """"""
+        return self.__size
+
+    def size(self):
+        """"""
+        return self.__size
+
+    def get(self, key):
+        """"""
+        return self.__Users.get(key)
+
 
 if __name__ == "__main__":
     a = [1,2,3,4,5,6,7,8]
