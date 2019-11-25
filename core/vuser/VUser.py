@@ -340,6 +340,7 @@ class VUser(object):
         :param msgid:
         :return:
         """
+        start_time = time.time() * 1000
         # 发送的数据需要再重新包装
         sendPacket = Packet()
         # 起始标记
@@ -360,8 +361,12 @@ class VUser(object):
         sendPacket.position = 1
         # 写入正确的协议长度 不包含起始标记和长度自己
         sendPacket.writeUnsignedInt(sendPacket.length()-5)
+        packet_time = time.time() * 1000 - start_time
         # 发送数据
         VSocketMgr.GetInstance().SendPacket(sendPacket.getvalue())
+        send_time = time.time() * 1000 - start_time
+        if send_time > 10 or packet_time > 10:
+            VLog.Warning("Send Pack time packtime{0} ms , sendtime{1} ms", packet_time, send_time)
         # 清除
         del packet
         del sendPacket
@@ -369,7 +374,7 @@ class VUser(object):
 
     def Send(self, packet, sockid):
         """
-        向某个socketid 发送协议数据，如何socketid 不存在，会抛异常
+        向某个socketid 发送协议数据
         :param packet:
         :param sockid:
         :return:

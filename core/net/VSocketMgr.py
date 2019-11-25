@@ -31,6 +31,7 @@ author:
 
 import time
 import socket
+import queue
 import selectors
 import threading
 
@@ -90,6 +91,7 @@ class VSocketMgr:
         self.__sock_type = 0
         self.__cachePacketData = Packet()
         self.__userDict = {}
+        self.__sendPackList = queue.Queue()
 
     def _select_thread(self):
         """
@@ -99,7 +101,8 @@ class VSocketMgr:
         while self.__running:
             events = self.__selector.select()
             for key, mask in events:
-                self._sock_recevie(key.fileobj)
+                if mask & selectors.EVENT_READ:
+                    self._sock_recevie(key.fileobj)
 
     def _sock_tcp_recevie(self, sock):
         """
@@ -121,6 +124,9 @@ class VSocketMgr:
         self.__cachePacketData.writeMulitBytes(data)
         self.__cachePacketData.position = 0
         length = self.__cachePacketData.length()
+        #
+        del data
+
         # 这里的分包只是分底层组装的包，具体服务器返回的协议内容有没有完整，需要OnMessage中自己判断
         while length - self.__cachePacketData.position > 0:
             # 长度不足
@@ -175,6 +181,10 @@ class VSocketMgr:
 
         # 检查协议头和长度是否正确
         packet = Packet(buff)
+
+        #
+        del buff
+
         head_flag = packet.readUnsignedByte() & 0xFF
         if head_flag != 0xEF:
             VLog.Error("[PTC] Recv Packet Head ERROR! flag:{0}", head_flag)
@@ -205,6 +215,7 @@ class VSocketMgr:
             return
         try:
             vuser.OnMessage(packet)
+            del packet
         except Exception as e:
             VLog.Trace(e)
 
@@ -264,13 +275,35 @@ class VSocketMgr:
         :param bin_data:
         :return:
         """
+        # self.__sendPackList.put(bin_data)
+        start_time = time.time() * 1000
         sock = self.__socklist.get()
+        get_time = time.time() * 1000 - start_time
         if not sock:
             VLog.Error("Send packet with none socket")
         if self.__sock_type == self.SOCK_TCP:
             sock.sendall(bin_data)
         else:
             sock.sendto(bin_data, (self.PTC_HOST, self.PTC_PORT))
+        send_time = time.time() * 1000 - start_time
+        if get_time > 10 or send_time > 10:
+            VLog.Warning("SendPacket get_time:{0} ms , send_time:{1} ms",get_time, send_time)
+
+    def __sendPacket(self, sock, data):
+        """
+        发送数据
+        :param sock:
+        :param data:
+        :return:
+        """
+        start_time = time.time() * 1000
+        if self.__sock_type == self.SOCK_TCP:
+            sock.sendall(data)
+        else:
+            sock.sendto(data, (self.PTC_HOST, self.PTC_PORT))
+        send_time = time.time() * 1000 - start_time
+        if send_time > 10:
+            VLog.Warning("SendPacket  send_time:{0} ms", send_time)
 
     def Register(self, uid , user):
         """

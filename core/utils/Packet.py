@@ -69,6 +69,18 @@ class Packet(Endian):
         self.endian = self.BIG_ENDIAN
         # 当前位置
         self.position = 0
+        
+    def __del__(self):
+        """
+        析构
+        :return:
+        """
+        try:
+            self.__buf.close()
+            self.__buf = None
+            self.position = 0
+        except Exception as e:
+            print(e)
 
     def readShort(self):
         """ """
