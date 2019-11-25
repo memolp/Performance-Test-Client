@@ -149,3 +149,18 @@ class ThreadExecutor:
                         VLog.Fatal("[PERFORMANCE] {0} work execute with {1} ms", self.__thread_name, cost)
             except queue.Empty:
                 pass
+
+
+class SingletonThreadExecutor(ThreadExecutor):
+    """"""
+    _instance = None
+
+    @staticmethod
+    def GetInstance():
+        """
+        单例对象
+        :return:
+        """
+        if not SingletonThreadExecutor._instance:
+            SingletonThreadExecutor._instance = SingletonThreadExecutor()
+        return SingletonThreadExecutor._instance

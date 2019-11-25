@@ -38,7 +38,7 @@ import core.utils.VUtils as VUtils
 from core.vuser.VUser import VUser
 from core.utils.VUtils import *
 from core.utils.VLog import VLog
-import core.utils.threadpool as ThreadPool
+
 from concurrent.futures import ThreadPoolExecutor
 
 
@@ -68,6 +68,7 @@ class VUserMgr:
         self.__index = 0
         self.__random = VUtils.Random()
         self.__testRunning = False
+        #self.__threadPool = ThreadPoolExecutor()
 
     def GetAllUsers(self):
         """

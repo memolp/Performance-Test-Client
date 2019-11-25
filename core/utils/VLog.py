@@ -82,7 +82,7 @@ class VLog:
         """
         if VLog.level <= 2:
             sLog = fmt.format(*args)
-            print("{0} [INFO] {1}".format(round(time.time(), 3), sLog))
+            print("{0} [WARN] {1}".format(round(time.time(), 3), sLog))
 
     @staticmethod
     def Error(fmt, *args):

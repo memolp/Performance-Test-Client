@@ -36,22 +36,41 @@ import threading
 
 from core.utils.VLog import VLog
 from core.utils.Packet import Packet
-from core.vuser.VUserMgr import VUserMgr
+
 import core.utils.VUtils as VUtils
 
+class Sockets(list):
+    def __init__(self):
+        """"""
+        super(Sockets, self).__init__()
+        self.random = VUtils.Random()
+
+    def get(self):
+        socks = self.random.poll(self, 1)
+        return socks[0]
 
 class VSocketMgr:
     """
     socket管理器
     """
+    # RPC服务协议类型
     SOCK_TCP = 1
     SOCK_UDP = 2
-    _instance = None
-    MAX_SELECT_TASK_NUM = 4
-    RECV_MAX_BUFF_SIZE = 1024000
+
+    # RPC服务器地址
     PTC_HOST = "127.0.0.1"
     PTC_PORT = 7090
+
+    # socket缓存区大小
+    SOCK_BUFF_MAX_SIZE = 1024000
+    # 单次读取数据大小
+    SINGLE_RECV_BUFF_SIZE = 10240
+
+    # 协议包头大小
     PACKET_HEAD_LEN = 20
+
+    # 单例类
+    _instance = None
     @staticmethod
     def GetInstance():
         """
@@ -70,6 +89,7 @@ class VSocketMgr:
         self.__socklist = Sockets()
         self.__sock_type = 0
         self.__cachePacketData = Packet()
+        self.__userDict = {}
 
     def _select_thread(self):
         """
@@ -92,7 +112,7 @@ class VSocketMgr:
             begin_time = time.time() * 1000
 
         try:
-            data = sock.recv(self.RECV_MAX_BUFF_SIZE)
+            data = sock.recv(self.SINGLE_RECV_BUFF_SIZE)
         except Exception as e:
             VLog.Trace(e)
             return
@@ -107,7 +127,7 @@ class VSocketMgr:
             if length - self.__cachePacketData.position < self.PACKET_HEAD_LEN:
                 break
             # 开始标记不对
-            head_flag = self.__cachePacketData.readUnsignedByte() & 0xFF
+            head_flag = self.__cachePacketData.readUnsignedByte()
             if head_flag != 0xEF:
                 self.__cachePacketData.clear()
                 VLog.Error("[PTC] Recv Packet Head ERROR! flag:{0}", head_flag)
@@ -119,22 +139,9 @@ class VSocketMgr:
                 break
             # 检查uid
             uid = self.__cachePacketData.readUnsignedInt()
-            # 检查序号
-            timestamp = self.__cachePacketData.readUnsignedInt64()
-            sock_id = self.__cachePacketData.readUnsignedByte()
-            msg_id = self.__cachePacketData.readUnsignedShort()
-            user = VUserMgr.GetInstance().GetUserByUID(uid)
-            if not user:
-                break
-            if msg_id == self.MSG_DISCONNECT:
-                user.__OnClose(sock_id)
-            elif msg_id == self.MSG_PACKET:
-                rdata = self.__cachePacketData.readMulitBytes(pack_len - (self.PACKET_HEAD_LEN - 5))
-                user.__OnMessage(sock_id, Packet(rdata))
-            elif msg_id == self.MSG_CONNECT:
-                user.__OnConnected(sock_id)
-            else:
-                VLog.Error("[PTC] Recv Packet MsgID ERROR! msg:{0} ", msg_id)
+            # 读取完整的协议包
+            completed_packet = Packet(self.__cachePacketData.readMulitBytes(pack_len - 4))
+            self._msg_pack(uid, completed_packet)
             # 读取剩余内容
             remaining = length - self.__cachePacketData.position
             if remaining <= 0:
@@ -143,11 +150,11 @@ class VSocketMgr:
                 cdata = self.__cachePacketData.readMulitBytes(remaining)
                 self.__cachePacketData.reset(cdata)
             length = self.__cachePacketData.length()
+
         if VLog.Performance_Log:
             cost_time = time.time() * 1000 - begin_time
             if cost_time > 20:
                 VLog.Fatal("[PERFORMANCE] OnReceice Cost Time:{0}ms UID:{1}", cost_time)
-
 
     def _sock_udp_recevie(self, sock):
         """
@@ -160,11 +167,13 @@ class VSocketMgr:
             begin_time = time.time() * 1000
 
         try:
-            buff, address = sock.recvform(self.RECV_MAX_BUFF_SIZE)
+            # 单个协议包的大小，必须与发送方使用一致，否则会丢包
+            buff, address = sock.recvfrom(self.SINGLE_RECV_BUFF_SIZE)
         except Exception as e:
             VLog.Trace(e)
             return
 
+        # 检查协议头和长度是否正确
         packet = Packet(buff)
         head_flag = packet.readUnsignedByte() & 0xFF
         if head_flag != 0xEF:
@@ -174,24 +183,30 @@ class VSocketMgr:
         if packet.length() - packet.position < pack_len:
             VLog.Error("[PTC] Recv Packet Size ERROR! size:{0} ",pack_len)
             return
-        # 检查uid
+
+        # udp 协议不会粘包，直接发送即可
         uid = packet.readUnsignedInt()
-        # 检查序号
-        timestamp = packet.readUnsignedInt64()
-        sock_id = packet.readUnsignedByte()
-        msg_id = packet.readUnsignedShort()
-        user = VUserMgr.GetInstance().GetUserByUID(uid)
-        if not user:
+        self._msg_pack(uid, packet)
+
+        if VLog.Performance_Log:
+            cost_time = time.time() * 1000 - begin_time
+            if cost_time > 20:
+                VLog.Fatal("[PERFORMANCE] OnReceice Cost Time:{0}ms UID:{1}", cost_time)
+
+    def _msg_pack(self, uid, packet):
+        """
+        消息协议
+        :param uid:
+        :param packet:
+        :return:
+        """
+        vuser = self.__userDict.get(uid)
+        if not vuser:
             return
-        if msg_id == self.MSG_DISCONNECT:
-            user.__OnClose(sock_id)
-        elif msg_id == self.MSG_PACKET:
-            rdata = packet.readMulitBytes(pack_len - (self.PACKET_HEAD_LEN - 5))
-            user.__OnMessage(sock_id, Packet(rdata))
-        elif msg_id == self.MSG_CONNECT:
-            user.__OnConnected(sock_id)
-        else:
-            VLog.Error("[PTC] Recv Packet MsgID ERROR! msg:{0} ", msg_id)
+        try:
+            vuser.OnMessage(packet)
+        except Exception as e:
+            VLog.Trace(e)
 
     def _sock_recevie(self, sock):
         """
@@ -211,6 +226,7 @@ class VSocketMgr:
         :param sock_type:
         :return:
         """
+        self.Clear()
         self.__sock_type = sock_type
         # 创建socket列表
         for i in range(sock_num):
@@ -231,15 +247,15 @@ class VSocketMgr:
         sock = None
         if sock_type == self.SOCK_TCP:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.RECV_MAX_BUFF_SIZE)
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.RECV_MAX_BUFF_SIZE)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.SOCK_BUFF_MAX_SIZE)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.SOCK_BUFF_MAX_SIZE)
             sock.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
             sock.connect((self.PTC_HOST, self.PTC_PORT))
             sock.setblocking(False)
         else:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.RECV_MAX_BUFF_SIZE)
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.RECV_MAX_BUFF_SIZE)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.SOCK_BUFF_MAX_SIZE)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.SOCK_BUFF_MAX_SIZE)
         return sock
 
     def SendPacket(self, bin_data):
@@ -248,13 +264,31 @@ class VSocketMgr:
         :param bin_data:
         :return:
         """
-        sock = self.__socklist.poll()
+        sock = self.__socklist.get()
         if not sock:
             VLog.Error("Send packet with none socket")
         if self.__sock_type == self.SOCK_TCP:
             sock.sendall(bin_data)
         else:
             sock.sendto(bin_data, (self.PTC_HOST, self.PTC_PORT))
+
+    def Register(self, uid , user):
+        """
+        vuser 将自己注册进来，以便可以接受消息
+        :param uid:
+        :param user:
+        :return:
+        """
+        self.__userDict[uid] = user
+
+    def UnRegister(self, uid):
+        """
+        反注册
+        :param uid:
+        :return:
+        """
+        if uid in self.__userDict:
+            del self.__userDict[uid]
 
     def Stop(self):
         """
@@ -263,12 +297,10 @@ class VSocketMgr:
         """
         self.__running = False
 
-
-class Sockets(list):
-    def __init__(self):
-        """"""
-        super(Sockets, self).__init__()
-        self.random = VUtils.Random()
-
-    def poll(self):
-        return self.random.poll(self, 1)
+    def Clear(self):
+        """
+        清理
+        :return:
+        """
+        self.__userDict.clear()
+        self.__userDict = {}

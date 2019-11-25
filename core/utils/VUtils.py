@@ -203,12 +203,17 @@ class DictArray(object):
         """"""
         return self.__Users.get(key)
 
+    def __getitem__(self, index):
+        """"""
+        if isinstance(index, slice):
+            return list(self.__Users.values())[index]
+        return self.__Users.get(index)
+
 
 if __name__ == "__main__":
     a = [1,2,3,4,5,6,7,8]
-    r = Random()
-    for x in r.taker(a,3):
-        print(x)
-        if not x:
-            break
-
+    b = DictArray()
+    b.append(1)
+    b.append(2)
+    b.append(3)
+    print(b[:2])

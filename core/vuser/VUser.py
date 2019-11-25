@@ -29,12 +29,14 @@ author:
     JeffXun
 """
 import time
+import queue
 
 import core.utils.VUtils as VUtils
 
 from core.utils.VLog import VLog
 from core.utils.Packet import Packet
-#from core.net.VSocketMgr import VSocketMgr
+from core.utils.threadpool import SingletonThreadExecutor
+from core.net.VSocketMgr import VSocketMgr
 from core.utils.VTranslation import VTranslation
 from core.vuser.VUserScene import VUserScene
 
@@ -48,11 +50,10 @@ class VUser(object):
     MSG_PACKET = 2000
     PACKET_HEAD_LEN = 20
 
-    def __init__(self, uid,):
+    def __init__(self, uid):
         """
         Create a Vuser by uid
         :param uid: uid 唯一标识
-        :param scene: 场景对象
         """
         # 缓存存储数据
         self.__cacheCustomData = {}
@@ -69,8 +70,8 @@ class VUser(object):
         self.__translationList = {}
         self.__tickCalback = None
         self.__finishTranslation = {}
-        # [底层的]缓存未读取完的数据包
-        self.__cachePacketData = Packet()
+        VSocketMgr.GetInstance().Register(uid, self)
+
 
     def ClearData(self):
         """
@@ -88,8 +89,6 @@ class VUser(object):
         self.__stateCallArgs = []
         self.__toState = None
         self.__tickCalback = None
-        # [底层的]缓存未读取完的数据包
-        self.__cachePacketData = Packet()
 
     def GetScene(self):
         """
@@ -376,7 +375,7 @@ class VUser(object):
         :return:
         """
         # 发送数据
-        self.__SendPacket(packet,sockid,self.MSG_PACKET)
+        self.__SendPacket(packet, sockid, self.MSG_PACKET)
 
     def CreatePacket(self,data=None):
         """
@@ -384,6 +383,28 @@ class VUser(object):
         :return: 返回一个Packet对象
         """
         return Packet(data)
+
+    def OnMessage(self, packet):
+        """
+        消息包
+        :param packet:
+        :return:
+        """
+        current = time.time()
+        # 检查序号
+        timestamp = packet.readUnsignedInt64()
+        if current - timestamp > 10:
+           VLog.Warning("[PTC] Deal Packet time is cost")
+        sock_id = packet.readUnsignedByte()
+        msg_id = packet.readUnsignedShort()
+        if msg_id == self.MSG_DISCONNECT:
+            self.__OnClose(sock_id)
+        elif msg_id == self.MSG_PACKET:
+            self.__OnMessage(sock_id, packet)
+        elif msg_id == self.MSG_CONNECT:
+            self.__OnConnected(sock_id)
+        else:
+            VLog.Error("[PTC] Recv Packet MsgID ERROR! msg:{0} ", msg_id)
 
     def __OnClose(self, sock_id):
         """
