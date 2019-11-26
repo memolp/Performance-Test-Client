@@ -262,7 +262,7 @@ class VUserMgr:
                 time.sleep(delay)
         VLog.Info("[PTC] Call VUser OnInit ............................end")
         # 等待客户端初始化完成
-        self._wait_client_initCompleted(0.9)
+        self._wait_client_initCompleted(1.0)
         # 等待一分钟后开始压测
         for i in range(0, 0, -1):
             VLog.Info("[PTC] Wait for {0} seconds to Testing ...........", i - 1)

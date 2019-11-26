@@ -363,7 +363,7 @@ class VUser(object):
         sendPacket.writeUnsignedInt(sendPacket.length()-5)
         packet_time = time.time() * 1000 - start_time
         # 发送数据
-        VSocketMgr.GetInstance().SendPacket(sendPacket.getvalue())
+        VSocketMgr.GetInstance().SendPacket(self.__uid, sendPacket.getvalue())
         send_time = time.time() * 1000 - start_time
         if send_time > 10 or packet_time > 10:
             VLog.Warning("Send Pack time packtime{0} ms , sendtime{1} ms", packet_time, send_time)
@@ -405,7 +405,8 @@ class VUser(object):
         if msg_id == self.MSG_DISCONNECT:
             self.__OnClose(sock_id)
         elif msg_id == self.MSG_PACKET:
-            self.__OnMessage(sock_id, packet)
+            buff_data = packet.readMulitBytes(packet.length() - packet.position)
+            self.__OnMessage(sock_id, buff_data)
         elif msg_id == self.MSG_CONNECT:
             self.__OnConnected(sock_id)
         else:

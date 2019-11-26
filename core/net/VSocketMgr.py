@@ -31,24 +31,12 @@ author:
 
 import time
 import socket
-import queue
 import selectors
 import threading
 
 from core.utils.VLog import VLog
 from core.utils.Packet import Packet
 
-import core.utils.VUtils as VUtils
-
-class Sockets(list):
-    def __init__(self):
-        """"""
-        super(Sockets, self).__init__()
-        self.random = VUtils.Random()
-
-    def get(self):
-        socks = self.random.poll(self, 1)
-        return socks[0]
 
 class VSocketMgr:
     """
@@ -87,11 +75,11 @@ class VSocketMgr:
         self.__selector = selectors.DefaultSelector()
         self.__running = False
         self.__thread = None
-        self.__socklist = Sockets()
+        self.__sock_list = []
+        self.__sock_num = 0
         self.__sock_type = 0
-        self.__cachePacketData = Packet()
+        self.__cache_packet = {}
         self.__userDict = {}
-        self.__sendPackList = queue.Queue()
 
     def _select_thread(self):
         """
@@ -120,47 +108,53 @@ class VSocketMgr:
             VLog.Trace(e)
             return
 
-        self.__cachePacketData.position = self.__cachePacketData.length()
-        self.__cachePacketData.writeMulitBytes(data)
-        self.__cachePacketData.position = 0
-        length = self.__cachePacketData.length()
-        #
-        del data
+        if sock not in self.__cache_packet:
+            self.__cache_packet[sock] = Packet()
+
+        # 缓存包
+        cache_packet = self.__cache_packet[sock]
+        cache_packet.position = cache_packet.length()
+        cache_packet.writeMulitBytes(data)
+        cache_packet.position = 0
+        length = cache_packet.length()
 
         # 这里的分包只是分底层组装的包，具体服务器返回的协议内容有没有完整，需要OnMessage中自己判断
-        while length - self.__cachePacketData.position > 0:
+        while length - cache_packet.position > 0:
             # 长度不足
-            if length - self.__cachePacketData.position < self.PACKET_HEAD_LEN:
+            if length - cache_packet.position < self.PACKET_HEAD_LEN:
                 break
             # 开始标记不对
-            head_flag = self.__cachePacketData.readUnsignedByte()
+            head_flag = cache_packet.readUnsignedByte()
             if head_flag != 0xEF:
-                self.__cachePacketData.clear()
+                cache_packet.clear()
                 VLog.Error("[PTC] Recv Packet Head ERROR! flag:{0}", head_flag)
                 break
-            pack_len = self.__cachePacketData.readUnsignedInt()
+            pack_len = cache_packet.readUnsignedInt()
             # 协议长度不足
-            if length - self.__cachePacketData.position < pack_len:
-                self.__cachePacketData.position = length
+            if length - cache_packet.position < pack_len:
+                cache_packet.position = length
                 break
             # 检查uid
-            uid = self.__cachePacketData.readUnsignedInt()
+            uid = cache_packet.readUnsignedInt()
             # 读取完整的协议包
-            completed_packet = Packet(self.__cachePacketData.readMulitBytes(pack_len - 4))
+            completed_packet = Packet(cache_packet.readMulitBytes(pack_len - 4))
             self._msg_pack(uid, completed_packet)
             # 读取剩余内容
-            remaining = length - self.__cachePacketData.position
+            remaining = length - cache_packet.position
             if remaining <= 0:
-                self.__cachePacketData.clear()
+                cache_packet.clear()
             else:
-                cdata = self.__cachePacketData.readMulitBytes(remaining)
-                self.__cachePacketData.reset(cdata)
-            length = self.__cachePacketData.length()
+                cdata = cache_packet.readMulitBytes(remaining)
+                cache_packet.reset(cdata)
+            length = cache_packet.length()
 
         if VLog.Performance_Log:
             cost_time = time.time() * 1000 - begin_time
             if cost_time > 20:
                 VLog.Fatal("[PERFORMANCE] OnReceice Cost Time:{0}ms UID:{1}", cost_time)
+
+        # 最后删除数据
+        del data
 
     def _sock_udp_recevie(self, sock):
         """
@@ -238,12 +232,13 @@ class VSocketMgr:
         :return:
         """
         self.Clear()
+        self.__sock_num = sock_num
         self.__sock_type = sock_type
         # 创建socket列表
         for i in range(sock_num):
             s = self._create_sock_type(sock_type)
             self.__selector.register(s, selectors.EVENT_READ)
-            self.__socklist.append(s)
+            self.__sock_list.append(s)
         # 启动线程
         self.__running = True
         self.__thread = threading.Thread(target=self._select_thread, args=())
@@ -269,41 +264,21 @@ class VSocketMgr:
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.SOCK_BUFF_MAX_SIZE)
         return sock
 
-    def SendPacket(self, bin_data):
+    def SendPacket(self, uid, bin_data):
         """
         发送数据包
+        :param uid: 多个socket的时候，根据uid去模指定的socket
         :param bin_data:
         :return:
         """
-        # self.__sendPackList.put(bin_data)
-        start_time = time.time() * 1000
-        sock = self.__socklist.get()
-        get_time = time.time() * 1000 - start_time
+        index = int(uid % self.__sock_num)
+        sock = self.__sock_list[index]
         if not sock:
             VLog.Error("Send packet with none socket")
         if self.__sock_type == self.SOCK_TCP:
             sock.sendall(bin_data)
         else:
             sock.sendto(bin_data, (self.PTC_HOST, self.PTC_PORT))
-        send_time = time.time() * 1000 - start_time
-        if get_time > 10 or send_time > 10:
-            VLog.Warning("SendPacket get_time:{0} ms , send_time:{1} ms",get_time, send_time)
-
-    def __sendPacket(self, sock, data):
-        """
-        发送数据
-        :param sock:
-        :param data:
-        :return:
-        """
-        start_time = time.time() * 1000
-        if self.__sock_type == self.SOCK_TCP:
-            sock.sendall(data)
-        else:
-            sock.sendto(data, (self.PTC_HOST, self.PTC_PORT))
-        send_time = time.time() * 1000 - start_time
-        if send_time > 10:
-            VLog.Warning("SendPacket  send_time:{0} ms", send_time)
 
     def Register(self, uid , user):
         """
