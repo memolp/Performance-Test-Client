@@ -29,7 +29,7 @@ author:
     JeffXun
 """
 
-import time
+import datetime
 import traceback
 
 
@@ -58,7 +58,7 @@ class VLog:
         """
         if VLog.level <= 0:
             sLog = fmt.format(*args)
-            print("{0} [DEBUG] {1}".format(round(time.time(), 3), sLog))
+            print("{0} [DEBUG] {1}".format(datetime.datetime.now(), sLog))
 
     @staticmethod
     def Info(fmt, *args):
@@ -70,7 +70,7 @@ class VLog:
         """
         if VLog.level <= 1:
             sLog = fmt.format(*args)
-            print("{0} [INFO] {1}".format(round(time.time(), 3), sLog))
+            print("{0} [INFO] {1}".format(datetime.datetime.now(), sLog))
 
     @staticmethod
     def Warning(fmt, *args):
@@ -82,7 +82,7 @@ class VLog:
         """
         if VLog.level <= 2:
             sLog = fmt.format(*args)
-            print("{0} [WARN] {1}".format(round(time.time(), 3), sLog))
+            print("{0} [WARN] {1}".format(datetime.datetime.now(), sLog))
 
     @staticmethod
     def Error(fmt, *args):
@@ -94,7 +94,7 @@ class VLog:
         """
         if VLog.level <= 3:
             sLog = fmt.format(*args)
-            print("{0} [ERROR] {1}".format(round(time.time(), 3), sLog))
+            print("{0} [ERROR] {1}".format(datetime.datetime.now(), sLog))
 
     @staticmethod
     def Fatal(fmt, *args):
@@ -106,7 +106,7 @@ class VLog:
         """
         if VLog.level <= 4:
             sLog = fmt.format(*args)
-            print("{0} [FATA] {1}".format(round(time.time(), 3), sLog))
+            print("{0} [FATA] {1}".format(datetime.datetime.now(), sLog))
 
     @staticmethod
     def Trace(msg):
@@ -114,7 +114,7 @@ class VLog:
         打印堆栈
         :return:
         """
-        print("{0} [TRACE] {1} stack: {2}".format(round(time.time(), 3), msg, traceback.format_exc()))
+        print("{0} [TRACE] {1} stack: {2}".format(datetime.datetime.now(), msg, traceback.format_exc()))
 
 def setLevel(level):
     """

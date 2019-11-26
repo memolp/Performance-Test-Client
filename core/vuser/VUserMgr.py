@@ -30,16 +30,18 @@ author:
 """
 
 import time
+import math
 import threading
 
-import core.utils.VUtils as VUtils
 
+import concurrent.futures as concurrent
+import core.utils.VUtils as VUtils
 
 from core.vuser.VUser import VUser
 from core.utils.VUtils import *
 from core.utils.VLog import VLog
 
-from concurrent.futures import ThreadPoolExecutor
+
 
 
 class VUserMgr:
@@ -49,6 +51,8 @@ class VUserMgr:
     _instance = None
     # 默认一直运行
     RUN_TEST_TIMES = -1
+    # 并发线程池
+    TPS_THREAD_NUM = 2
 
     @staticmethod
     def GetInstance():
@@ -68,7 +72,7 @@ class VUserMgr:
         self.__index = 0
         self.__random = VUtils.Random()
         self.__testRunning = False
-        #self.__threadPool = ThreadPoolExecutor()
+        self.__executor = concurrent.ThreadPoolExecutor(max_workers=self.TPS_THREAD_NUM)
 
     def GetAllUsers(self):
         """
@@ -259,6 +263,10 @@ class VUserMgr:
         VLog.Info("[PTC] Call VUser OnInit ............................end")
         # 等待客户端初始化完成
         self._wait_client_initCompleted(0.9)
+        # 等待一分钟后开始压测
+        for i in range(0, 0, -1):
+            VLog.Info("[PTC] Wait for {0} seconds to Testing ...........", i - 1)
+            time.sleep(1)
         VLog.Info("[PTC] Begin Concurrence ............................")
         # 主循环
         round_count = 0
@@ -267,9 +275,13 @@ class VUserMgr:
             users = self.__random.poll(self.__vuserList, self.__tps, lambda x: x.IsFinished())
             if len(users) < self.__tps:
                 VLog.Info("[PTC] Concurrence TPS :{0} ,expect:{1}", len(users), self.__tps)
-            # 执行任务
-            for vuser in users:
-                self.OnConcurrence(vuser, round_count)
+
+            tasks = [self.__executor.submit(self._users_concurrent, users, i, round_count)
+                     for i in range(self.TPS_THREAD_NUM)]
+            concurrent.wait(tasks, return_when=concurrent.ALL_COMPLETED)
+            # # 执行任务
+            # for vuser in users:
+            #     self.OnConcurrence(vuser, round_count)
             # 每执行一轮，+1
             round_count += 1
             # 花费时间正常不会超过1秒
@@ -280,6 +292,22 @@ class VUserMgr:
             if cost_time < 1.0:
                 time.sleep(1.0 - cost_time)
         VLog.Info("[PTC] End Concurrence ............................")
+
+    def _users_concurrent(self, users, i, round_count):
+        """
+        用户并发
+        :param users:
+        :param i:
+        :param round_count:
+        :return:
+        """
+        size = len(users)
+        split_num = math.ceil(size / self.TPS_THREAD_NUM)
+        index = i * split_num
+        while index < size and index < (i+1)*split_num:
+            user = users[index]
+            index += 1
+            self.OnConcurrence(user, round_count)
 
     def OnInit(self, vuser):
         """
