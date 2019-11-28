@@ -35,7 +35,7 @@ import traceback
 
 class VLog:
     """日志"""
-    level = 0
+    level = 1
     # 性能日志单独做一个开关
     Performance_Log = False
 

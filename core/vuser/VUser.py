@@ -29,15 +29,11 @@ author:
     JeffXun
 """
 import time
-import queue
 
 import core.utils.VUtils as VUtils
 
 from core.utils.VLog import VLog
 from core.utils.Packet import Packet
-from core.utils.threadpool import SingletonThreadExecutor
-from core.net.VSocketMgr import VSocketMgr
-from core.utils.VTranslation import VTranslation
 from core.vuser.VUserScene import VUserScene
 
 
@@ -50,28 +46,23 @@ class VUser(object):
     MSG_PACKET = 2000
     PACKET_HEAD_LEN = 20
 
-    def __init__(self, uid):
+    def __init__(self, uid, rpc_client):
         """
         Create a Vuser by uid
         :param uid: uid 唯一标识
+        :param rpc_client: rpc客户端
         """
         # 缓存存储数据
         self.__cacheCustomData = {}
         self.__uid = uid
         self.__scene = None
         self.__task = None
-        self.__states = {}
-        self.__currentState = None
         self.__initCompleted = False
         self.__useBusy = True
-        self.__stateCallArgs = []
-        self.__toState = None
-        # 同一个事务可能存在多个统计，需要字典中用列表标识
-        self.__translationList = {}
-        self.__tickCalback = None
-        self.__finishTranslation = {}
-        VSocketMgr.GetInstance().Register(uid, self)
-
+        self.__tickCallback = None
+        self.__rpc_client = rpc_client
+        self.__rpc_client.register_user(uid, self.OnMessage)
+        self.__translation = None
 
     def ClearData(self):
         """
@@ -82,13 +73,10 @@ class VUser(object):
         self.__cacheCustomData = {}
         self.__scene = None
         self.__task = None
-        self.__states = {}
-        self.__currentState = None
         self.__initCompleted = False
         self.__useBusy = True
-        self.__stateCallArgs = []
-        self.__toState = None
-        self.__tickCalback = None
+        self.__tickCallback = None
+
 
     def GetScene(self):
         """
@@ -107,6 +95,14 @@ class VUser(object):
             VLog.Debug("VUser {0} Change Scene {1}", self.__uid, scene.sceneName)
             self.ClearData()
             self.__scene = scene
+
+    def SetTranslation(self, trans):
+        """
+        设置事务
+        :param trans:
+        :return:
+        """
+        self.__translation = trans
 
     def SetData(self, key, data):
         """
@@ -166,86 +162,20 @@ class VUser(object):
         """
         self.__initCompleted = value
 
-    def BindState(self, state, callback):
-        """
-        绑定一个状态事件，当状态改变时会调用回调方法
-        :param state:
-        :param callback:
-        :return:
-        """
-        self.__states[state] = callback
-
-    def SetState(self, state):
-        """
-        将状态设置为某个值，不触发回调
-        :param state:
-        :return:
-        """
-        self.__currentState = state
-
-    def SwitchState(self, state, *args):
-        """
-        状态状态，会生成一个回调，在合适的时机调用回调
-        :param state:
-        :return:
-        """
-        if state not in self.__states:
-            VLog.Error("[PTC] state :{0} is not exist! uid:{1}", state, self.__uid)
-            return
-        # 状态在当前状态，不触发回调
-        if state == self.__currentState:
-            VLog.Info("[PTC] warning switchstate is in current state :{0} uid: {1}!", state, self.__uid)
-            return
-        # 如果状态已经是目标状态，则不执行
-        if state == self.__toState:
-            return
-        self.__toState = state
-        self.__stateCallArgs = args
-
-    def GetStateCallback(self):
-        """
-        [private]获取状态回调方法，准备执行
-        :return:
-        """
-        # 没有状态改变
-        if self.__currentState == self.__toState:
-            return None
-        # 没有状态
-        if self.__toState is None:
-            return None
-        # 更改状态
-        self.__currentState = self.__toState
-        # 返回状态回调函数
-        return self.__states[self.__toState]
-
-    def GetStateCallbackArgs(self):
-        """
-        获取状态改变回调的传入参数
-        :return:
-        """
-        return self.__stateCallArgs
-
     def GetTickCallback(self):
         """
         [private]获取定时回调方法
         :return:
         """
-        return self.__tickCalback
+        return self.__tickCallback
 
-    def SetTickCallback(self,callback):
+    def SetTickCallback(self, callback):
         """
         设置定时回调方法 1秒间隔
         :param callback:
         :return:
         """
-        self.__tickCalback = callback
-
-    def GetState(self):
-        """
-        获取当前的状态
-        :return:
-        """
-        return self.__currentState
+        self.__tickCallback = callback
 
     def IsFinished(self):
         """
@@ -256,13 +186,13 @@ class VUser(object):
             return False
         return True
 
-    def SetBusy(self, bool):
+    def SetBusy(self, b):
         """
         这是用户繁忙状态
-        :param bool:
+        :param b:
         :return:
         """
-        self.__useBusy = bool
+        self.__useBusy = b
 
     def StartTranslation(self, mname):
         """
@@ -270,11 +200,10 @@ class VUser(object):
         :param mname:
         :return:
         """
-        if mname not in self.__translationList:
-            self.__translationList[mname] = []
-        translation = VTranslation(self, mname)
-        # 添加事务到末尾
-        self.__translationList[mname].append(translation)
+        if not self.__translation:
+            VLog.Error("StartTranslation with not translation obj!")
+            return
+        self.__translation.Append(self.__uid, mname)
 
     def EndTranslation(self, mname):
         """
@@ -282,24 +211,7 @@ class VUser(object):
         :param mname:
         :return:
         """
-        if mname not in self.__translationList:
-            VLog.Error("[PTC] uid:{0} translation name :{1} is not exist!", self.__uid, mname)
-            return
-        # 移除第一个事务标记完成
-        if len(self.__translationList[mname]) > 0:
-            translation = self.__translationList[mname].pop(0)
-            translation.Finish()
-            # 添加进完成事务列表
-            if mname not in self.__finishTranslation:
-                self.__finishTranslation[mname] = []
-            self.__finishTranslation[mname].append(translation)
-
-    def GetTranslationInfo(self):
-        """
-        获取事务信息
-        :return: 进行中事务列表，已完成事务列表
-        """
-        return self.__translationList, self.__finishTranslation
+        self.__translation.Finish(self.__uid, mname)
 
     def Connect(self, host, port, sockid, socktype=0):
         """
@@ -310,8 +222,6 @@ class VUser(object):
         :param socktype: 创建链接的sock的类型 0 TCP 1 UDP
         :return:
         """
-        # 先清除数据，这个也是坑
-        #self.__cachePacketData.clear()
         packet = self.CreatePacket()
         packet.writeUnsignedByte(socktype)
         packet.writeUnsignedShort(len(host))
@@ -340,7 +250,8 @@ class VUser(object):
         :param msgid:
         :return:
         """
-        start_time = time.time() * 1000
+        if VLog.Performance_Log:
+            start_time = time.time() * 1000
         # 发送的数据需要再重新包装
         sendPacket = Packet()
         # 起始标记
@@ -361,12 +272,16 @@ class VUser(object):
         sendPacket.position = 1
         # 写入正确的协议长度 不包含起始标记和长度自己
         sendPacket.writeUnsignedInt(sendPacket.length()-5)
-        packet_time = time.time() * 1000 - start_time
+        # 性能日志
+        if VLog.Performance_Log:
+            packet_time = time.time() * 1000 - start_time
         # 发送数据
-        VSocketMgr.GetInstance().SendPacket(self.__uid, sendPacket.getvalue())
-        send_time = time.time() * 1000 - start_time
-        if send_time > 10 or packet_time > 10:
-            VLog.Warning("Send Pack time packtime{0} ms , sendtime{1} ms", packet_time, send_time)
+        self.__rpc_client.send_to_server(sendPacket.getvalue())
+        # 性能日志
+        if VLog.Performance_Log:
+            send_time = time.time() * 1000 - start_time
+            if send_time > 10 or packet_time > 10:
+                VLog.Fatal("[PTC] Send Pack time packtime{0} ms , sendtime{1} ms", packet_time, send_time)
         # 清除
         del packet
         del sendPacket
@@ -395,11 +310,14 @@ class VUser(object):
         :param packet:
         :return:
         """
-        current = time.time()
+        if VLog.Performance_Log:
+            current = time.time() * 1000
         # 检查序号
         timestamp = packet.readUnsignedInt64()
-        if current - timestamp > 10:
-           VLog.Warning("[PTC] Deal Packet time is cost")
+
+        if VLog.Performance_Log and current - timestamp > 10:
+            VLog.Fatal("[PTC] Deal Packet time is cost {0} ms", current - timestamp)
+
         sock_id = packet.readUnsignedByte()
         msg_id = packet.readUnsignedShort()
         if msg_id == self.MSG_DISCONNECT:
@@ -411,6 +329,11 @@ class VUser(object):
             self.__OnConnected(sock_id)
         else:
             VLog.Error("[PTC] Recv Packet MsgID ERROR! msg:{0} ", msg_id)
+
+        if VLog.Performance_Log:
+            c_time = time.time() * 1000 - current
+            if c_time > 10:
+                VLog.Fatal("[PTC] OnMessage uid {0}  cost {1} ms", self.__uid, c_time)
 
     def __OnClose(self, sock_id):
         """
