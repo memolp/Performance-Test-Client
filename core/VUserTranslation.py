@@ -78,15 +78,16 @@ class VTranslation:
 
         self.total_trans += 1
 
-    def Finish(self, uid, mname):
+    def Finish(self, uid, mname, timestamp=0):
         """
         事务完成
         :param uid:
         :param mname:
+        :param timestamp: 指定完成时间， 0表示当前时间
         :return:
         """
         # 记录结束时间
-        e_time = time.time() * 1000
+        e_time = time.time() * 1000 if timestamp == 0 else timestamp
         if mname not in self.user_trans_run:
             VLog.Error("translation {0} is not exist", mname)
             return
@@ -194,18 +195,18 @@ class VUserTranslation(object):
         self.round_trans_count += 1
         return trans
 
-    def _timer_of_translation_display(self, last_trans=True):
+    def _timer_of_translation_display(self, last_trans=True, last_index=5):
         """
         打印事务完成情况， 默认是只打印最后一个事务
         :param last_trans:
         :return:
         """
         while True:
-            if self.round_trans_count <= 0:
+            if self.round_trans_count <= last_index:
                 break
 
             if last_trans:
-                trans = self.round_trans[-1]
+                trans = self.round_trans[-last_index]
                 if trans.has_trans():
                     VLog.Info(str(self.round_trans[-1]))
                 break
@@ -229,7 +230,7 @@ class VUserTranslation(object):
         :param delay_time:
         :return:
         """
-        self._cancel_thread()
+        self.cancel_thread()
         # 定时器启动
         self.timer_thread = IntervalTimer(delay_time, self._timer_of_translation_display)
         self.timer_thread.start()
@@ -239,12 +240,12 @@ class VUserTranslation(object):
         结束时打印全部的事务数据
         :return:
         """
-        self._cancel_thread()
+        self.cancel_thread()
         VLog.Info("============================= Concurrence Translation =============================")
         self._timer_of_translation_display(False)
         VLog.Info("============================= Concurrence Translation =============================")
 
-    def _cancel_thread(self):
+    def cancel_thread(self):
         """
         取消线程调用
         :return:

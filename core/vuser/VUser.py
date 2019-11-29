@@ -205,13 +205,14 @@ class VUser(object):
             return
         self.__translation.Append(self.__uid, mname)
 
-    def EndTranslation(self, mname):
+    def EndTranslation(self, mname, timestamp=0):
         """
         标记一个事务结束
         :param mname:
+        :param timestamp: 指定完成事务的结束时间
         :return:
         """
-        self.__translation.Finish(self.__uid, mname)
+        self.__translation.Finish(self.__uid, mname, timestamp)
 
     def Connect(self, host, port, sockid, socktype=0):
         """
@@ -312,7 +313,7 @@ class VUser(object):
         """
         if VLog.Performance_Log:
             current = time.time() * 1000
-        # 检查序号
+        # 获取RPC发送时的时间
         timestamp = packet.readUnsignedInt64()
 
         if VLog.Performance_Log and current - timestamp > 10:
@@ -324,7 +325,7 @@ class VUser(object):
             self.__OnClose(sock_id)
         elif msg_id == self.MSG_PACKET:
             buff_data = packet.readMulitBytes(packet.length() - packet.position)
-            self.__OnMessage(sock_id, buff_data)
+            self.__OnMessage(sock_id, buff_data, timestamp)
         elif msg_id == self.MSG_CONNECT:
             self.__OnConnected(sock_id)
         else:
@@ -360,14 +361,15 @@ class VUser(object):
         except Exception as e:
             VLog.Trace(e)
 
-    def __OnMessage(self, sock_id, packet):
+    def __OnMessage(self, sock_id, packet, timestamp=0):
         """
         协议返回
         :param sock_id:
-        :param packet:
+        :param packet: 协议包-二进制
+        :param timestamp: 包自带的时间戳
         :return:
         """
         try:
-            self.__scene.OnMessage(sock_id, packet)
+            self.__scene.OnMessage(sock_id, packet, timestamp)
         except Exception as e:
             VLog.Trace(e)

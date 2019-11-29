@@ -134,7 +134,7 @@ def LocalTest():
         return
 
     user = 500
-    tps = 250
+    tps = 100
 
     VLog.VLog.Performance_Log = True
 
@@ -147,6 +147,15 @@ def LocalTest():
     concurrence.set_users(user)
     concurrence.set_concurrence(tps, 2)
     concurrence.run_concurrence(module, 3600)
+
+    while True:
+        sign = input("'q' to exit\n'p' to print translation\n>:")
+        if sign == 'q':
+            break
+        elif sign == 'p':
+            concurrence.display_translation()
+    concurrence.exit_concurrence()
+
 
 if __name__ == "__main__":
     if len(sys.argv) <= 1:

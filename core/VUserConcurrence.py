@@ -103,6 +103,14 @@ class VUserConcurrence:
         """
         return self.users_list
 
+    def exit_concurrence(self):
+        """
+        推出并发压测
+        :return:
+        """
+        self._close_tick_thread()
+        self.user_trans.cancel_thread()
+
     def run_concurrence(self, script_module, run_times=-1, init_delay=0):
         """
         执行并发
@@ -193,7 +201,7 @@ class VUserConcurrence:
         # 等待客户端初始化完成
         self._wait_init_completed(1.0)
         # 等待一分钟后开始压测
-        self._end_init(5)
+        self._end_init()
         # 启动事务打印
         self.user_trans.start_translation_display()
 
@@ -226,6 +234,25 @@ class VUserConcurrence:
                 time.sleep(1.0 - cost_time)
         VLog.Info("[PTC] End Concurrence ............................")
         # 结束时打印事务完成信息
+        self.user_trans.cancel_thread()
+        self._end_concurrence()
+        self.display_translation()
+
+    def _end_concurrence(self, wait_time=60):
+        """
+        等待结束并发
+        :param wait_time:
+        :return:
+        """
+        for i in range(wait_time, 0, -1):
+            VLog.Info("[PTC] Wait for {0} seconds to display translation ...........", i - 1)
+            time.sleep(1)
+
+    def display_translation(self):
+        """
+        打印事务
+        :return:
+        """
         self.user_trans.end_translation_display()
 
     def _users_concurrent(self, users, i, round_count, translation):
@@ -290,7 +317,14 @@ class VUserConcurrence:
         :param delay:
         :return:
         """
-        if self.timer_thread is not None and self.timer_thread.isAlive():
-            self.timer_thread.cancel()
+        self._close_tick_thread()
         self.timer_thread = VUtils.IntervalTimer(delay, self._timer_tick_thread, args=[delay])
         self.timer_thread.start()
+
+    def _close_tick_thread(self):
+        """
+        关闭定时器
+        :return:
+        """
+        if self.timer_thread is not None and self.timer_thread.isAlive():
+            self.timer_thread.cancel()

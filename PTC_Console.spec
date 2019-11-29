@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['ConsoleMain.py'],
-             pathex=['E:\\Project\\2019Code\\Performance-Test-Client'],
+             pathex=['F:\\JeffXun\\Project\\Performance-Test-Client'],
              binaries=[],
              datas=[],
              hiddenimports=[],
@@ -29,4 +29,4 @@ exe = EXE(pyz,
           strip=False,
           upx=True,
           runtime_tmpdir=None,
-          console=True , icon='E:\\Project\\2019Code\\Performance-Test-Client\\robot.ico')
+          console=True , icon='F:\\JeffXun\\Project\\Performance-Test-Client\\robot.ico')

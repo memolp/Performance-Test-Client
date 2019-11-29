@@ -42,11 +42,12 @@ class VUserScene(object):
         self.vUser = vuser
         self.sceneName = name
 
-    def OnMessage(self, sock_id, packet):
+    def OnMessage(self, sock_id, packet, timestamp=0):
         """
         网络收包返回
         :param sock_id:
-        :param packet:
+        :param packet: 二进制协议内容
+        :param timestamp: 协议包自带的时间戳 0表示没有
         :return:
         """
         raise NotImplementedError("Must implemented this method!")

@@ -147,7 +147,8 @@ class RPCClient(RPCClientBase):
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
             sock.connect((self.rpc_host, self.rpc_port))
-            sock.setblocking(False)
+            # 取消设置非阻塞，否则sendall会报错
+            # sock.setblocking(False)
         else:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         # 设置缓存buff
