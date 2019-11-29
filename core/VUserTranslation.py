@@ -108,17 +108,6 @@ class VTranslation:
 
         self.finish_trans += 1
 
-    def _return_result_(self):
-        """"""
-        result = ""
-        trans_info = self.trans_finish_statics()
-        for mname in trans_info.keys():
-            trans = trans_info[mname]
-            trans_rate = round(trans['finish'] / trans['total'], 4) * 100
-            result += self.FORMAT_STR.format(mname, self.round, trans['total'], trans['finish'], trans['response'],
-                                             trans_rate, int(trans['finish'] / trans['response']*1000))
-        return result
-
     def get_trans_n_count(self, mname):
         """
         获取未完成的事务数量
@@ -137,10 +126,25 @@ class VTranslation:
         """
         return self.total_trans > 0
 
-    def trans_finish_statics(self, strans_info=None):
+    def isEmpty(self):
+        """
+        判断是否没有添加事务
+        :return:
+        """
+        return self.total_trans == 0 and self.finish_trans == 0
+
+    def isAllDone(self):
+        """
+        判断事务全部执行完成
+        :return:
+        """
+        return self.total_trans == self.finish_trans
+
+    def trans_finish_statics(self, strans_info=None, avg_percent=0.2):
         """
         事务完成统计
         :param strans_info:
+        :param avg_percent:
         :return:
         """
         strans_info = strans_info if strans_info else {}
@@ -148,7 +152,7 @@ class VTranslation:
             u_finish = self.get_trans_n_count(mname)
             f_finish = len(self.translation_end[mname])
             t_trans = u_finish + f_finish
-            avg_response = round(avg(self.translation_end[mname], percent=0.2), 2)
+            avg_response = round(avg(self.translation_end[mname], percent=avg_percent), 2)
             if mname not in strans_info:
                 strans_info[mname] = {"total": t_trans, "finish": f_finish, "response": avg_response, "record": 1}
             else:
@@ -158,20 +162,18 @@ class VTranslation:
                 strans_info[mname]["record"] += 1
         return strans_info
 
-
-    def __repr__(self):
+    def display_translation(self):
         """
-        打印
+        显示事务
         :return:
         """
-        return self._return_result_()
-
-    def __str__(self):
-        """
-        打印
-        :return:
-        """
-        return self._return_result_()
+        trans_info = self.trans_finish_statics()
+        for mname in trans_info.keys():
+            trans = trans_info[mname]
+            trans_rate = round(trans['finish'] / trans['total'], 4) * 100
+            result = self.FORMAT_STR.format(mname, self.round, trans['total'], trans['finish'], trans['response'],
+                                             trans_rate, int(trans['finish'] / trans['response'] * 1000))
+            VLog.Info(result)
 
 
 class VUserTranslation(object):
@@ -183,6 +185,7 @@ class VUserTranslation(object):
         self.round_trans = []
         self.round_trans_count = 0
         self.timer_thread = None
+        self.trans_record = {}
 
     def create_round_translation(self, r_round):
         """
@@ -195,34 +198,39 @@ class VUserTranslation(object):
         self.round_trans_count += 1
         return trans
 
-    def _timer_of_translation_display(self, last_trans=True, last_index=5):
+    def _all_translation_display(self):
         """
-        打印事务完成情况， 默认是只打印最后一个事务
-        :param last_trans:
+        打印全部事务
         :return:
         """
-        while True:
-            if self.round_trans_count <= last_index:
+        for mname in self.trans_record.keys():
+            trans = self.trans_record[mname]
+            trans_rate = round(trans['finish'] / trans['total'], 4) * 100
+            avg_response = round(trans['response'] / trans['record'], 2)
+            msg = VTranslation.FORMAT_STR2.format(mname, trans['total'], trans['finish'], avg_response,
+                                                  trans_rate, int(trans['finish'] / trans['response'] * 1000))
+            VLog.Info(msg)
+
+    def _timer_of_translation_display(self, last_index=5):
+        """
+        打印事务完成情况
+        :param last_index:
+        :return:
+        """
+        index = 0
+        size = len(self.round_trans)
+        while index < size - last_index:
+            trans = self.round_trans[index]
+            if trans.isEmpty():
+                self.round_trans.pop(index)
                 break
 
-            if last_trans:
-                trans = self.round_trans[-last_index]
-                if trans.has_trans():
-                    VLog.Info(str(self.round_trans[-1]))
+            if trans.isAllDone():
+                self.trans_record = trans.trans_finish_statics(self.trans_record)
+                trans.display_translation()
+                self.round_trans.pop(index)
                 break
-
-            record = {}
-            for trans in self.round_trans:
-                if trans.has_trans():
-                    record = trans.trans_finish_statics(record)
-            for mname in record.keys():
-                trans = record[mname]
-                trans_rate = round(trans['finish'] / trans['total'], 4) * 100
-                avg_response = round(trans['response'] / trans['record'], 2)
-                msg = VTranslation.FORMAT_STR2.format(mname, trans['total'], trans['finish'], avg_response,
-                                                      trans_rate, int(trans['finish'] / trans['response'] * 1000))
-                VLog.Info(msg)
-            break
+            index += 1
 
     def start_translation_display(self, delay_time=1.0):
         """
@@ -242,7 +250,7 @@ class VUserTranslation(object):
         """
         self.cancel_thread()
         VLog.Info("============================= Concurrence Translation =============================")
-        self._timer_of_translation_display(False)
+        self._all_translation_display()
         VLog.Info("============================= Concurrence Translation =============================")
 
     def cancel_thread(self):

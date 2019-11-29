@@ -31,6 +31,7 @@ author:
 
 import time
 
+
 from core.utils.VLog import VLog
 from core.utils.Packet import Packet
 from core.rpc.RPCClient import RPCClient
@@ -65,7 +66,7 @@ class PTCRPCClient(RPCClient):
         :return:
         """
         begin_time = 0
-        if VLog.Performance_Log:
+        if VLog.PROFILE_OPEN:
             begin_time = time.time() * 1000
 
         try:
@@ -110,10 +111,10 @@ class PTCRPCClient(RPCClient):
                 self.cache_packet.reset(cdata)
             length = self.cache_packet.length()
 
-        if VLog.Performance_Log:
+        if VLog.PROFILE_OPEN:
             cost_time = time.time() * 1000 - begin_time
             if cost_time > 20:
-                VLog.Fatal("[PERFORMANCE] OnReceice Cost Time:{0}ms", cost_time)
+                VLog.Profile("[PERFORMANCE] OnReceice Cost Time:{0}ms", cost_time)
 
         # 最后删除数据
         del data
@@ -125,7 +126,7 @@ class PTCRPCClient(RPCClient):
         :return:
         """
         begin_time = 0
-        if VLog.Performance_Log:
+        if VLog.PROFILE_OPEN:
             begin_time = time.time() * 1000
 
         try:
@@ -154,7 +155,7 @@ class PTCRPCClient(RPCClient):
         uid = packet.readUnsignedInt()
         self._msg_pack(uid, packet)
 
-        if VLog.Performance_Log:
+        if VLog.PROFILE_OPEN:
             cost_time = time.time() * 1000 - begin_time
             if cost_time > 20:
                 VLog.Fatal("[PERFORMANCE] OnReceice Cost Time:{0}ms UID:{1}", cost_time)

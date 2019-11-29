@@ -17,15 +17,16 @@ class NewScene(VUserScene):
         super(NewScene,self).__init__(vuser,name)
         VLog.Debug("aaaaa")
 
-    def OnMessage(self, sock_id, packet):
+    def OnMessage(self, sock_id, packet, timestamp):
         """
         网络收包返回
         :param sock_id:
         :param packet: 需处理粘包和不完整包
+        :param timestamp:
         :return:
         """
         self.vUser.SetBusy(False)
-        self.vUser.EndTranslation("A")
+        self.vUser.EndTranslation("A", timestamp)
 
     def OnConcurrence(self, count):
         """

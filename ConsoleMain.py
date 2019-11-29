@@ -59,7 +59,7 @@ def Main():
         parse.add_argument("-initdelay", help="init user delay", type=float, default=0.1)
         parse.add_argument("-script", help="script file abspath", type=str)
         parse.add_argument("-thread_tps", help="thread of tps num", type=int, default=2)
-        parse.add_argument("-recv_buff", help="network recv buffer size", type=int, default=1024*1024)
+        parse.add_argument("-sock_buff", help="network recv buffer size", type=int, default=1024*1024)
         # 解析
         argument = parse.parse_args()
         RunConsole(argument)
@@ -108,7 +108,7 @@ def MultiTest(sence_cfg):
         # 加载压测脚本
         module = Loader.LoadModule(script['file'])
         if module:
-            scene = {"script":module, "times": script['times'], "max_times":script['max_times']}
+            scene = {"script": module, "times": script['times'], "max_times":script['max_times']}
             scenes.append(scene)
 
     rpc_client = PTCRPCClient()
@@ -133,13 +133,13 @@ def LocalTest():
     if module is None:
         return
 
-    user = 500
-    tps = 100
+    user = 2000
+    tps = 1000
 
-    VLog.VLog.Performance_Log = True
+    VLog.PROFILE_OPEN = True
 
     process = multiprocessing.Process()
-
+    import urllib3
     rpc_client = PTCRPCClient()
     rpc_client.connect_rpc_server("127.0.0.1", 7090, RPCConnectType.SOCK_TCP)
     concurrence = VUserConcurrence()

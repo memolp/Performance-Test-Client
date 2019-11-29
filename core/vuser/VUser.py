@@ -242,7 +242,6 @@ class VUser(object):
             packet = self.CreatePacket()
             self.__SendPacket(packet, sockid, self.MSG_DISCONNECT)
 
-
     def __SendPacket(self, packet, sockid , msgid):
         """
         向某个socketid 发送协议
@@ -251,7 +250,7 @@ class VUser(object):
         :param msgid:
         :return:
         """
-        if VLog.Performance_Log:
+        if VLog.PROFILE_OPEN:
             start_time = time.time() * 1000
         # 发送的数据需要再重新包装
         sendPacket = Packet()
@@ -273,20 +272,16 @@ class VUser(object):
         sendPacket.position = 1
         # 写入正确的协议长度 不包含起始标记和长度自己
         sendPacket.writeUnsignedInt(sendPacket.length()-5)
-        # 性能日志
-        if VLog.Performance_Log:
-            packet_time = time.time() * 1000 - start_time
         # 发送数据
         self.__rpc_client.send_to_server(sendPacket.getvalue())
         # 性能日志
-        if VLog.Performance_Log:
+        if VLog.PROFILE_OPEN:
             send_time = time.time() * 1000 - start_time
-            if send_time > 10 or packet_time > 10:
-                VLog.Fatal("[PTC] Send Pack time packtime{0} ms , sendtime{1} ms", packet_time, send_time)
+            if send_time > 10:
+                VLog.Profile("[PTC] Send Pack time send time{0} ms", send_time)
         # 清除
         del packet
         del sendPacket
-
 
     def Send(self, packet, sockid):
         """
@@ -311,13 +306,13 @@ class VUser(object):
         :param packet:
         :return:
         """
-        if VLog.Performance_Log:
+        if VLog.PROFILE_OPEN:
             current = time.time() * 1000
         # 获取RPC发送时的时间
         timestamp = packet.readUnsignedInt64()
 
-        if VLog.Performance_Log and current - timestamp > 10:
-            VLog.Fatal("[PTC] Deal Packet time is cost {0} ms", current - timestamp)
+        if VLog.PROFILE_OPEN and current - timestamp > 10:
+            VLog.Profile("[PTC] Deal Packet time is cost {0} ms", current - timestamp)
 
         sock_id = packet.readUnsignedByte()
         msg_id = packet.readUnsignedShort()
@@ -331,10 +326,10 @@ class VUser(object):
         else:
             VLog.Error("[PTC] Recv Packet MsgID ERROR! msg:{0} ", msg_id)
 
-        if VLog.Performance_Log:
+        if VLog.PROFILE_OPEN:
             c_time = time.time() * 1000 - current
             if c_time > 10:
-                VLog.Fatal("[PTC] OnMessage uid {0}  cost {1} ms", self.__uid, c_time)
+                VLog.Profile("[PTC] OnMessage uid {0}  cost {1} ms", self.__uid, c_time)
 
     def __OnClose(self, sock_id):
         """

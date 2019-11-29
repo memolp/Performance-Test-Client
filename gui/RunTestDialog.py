@@ -212,7 +212,7 @@ class RunTestDialog(QDialog):
         config['max_fd'] = int(self.__get_ele_text(self.mTestThreadFDNumInput, "500"))
         config['thread_tps'] = int(self.__get_ele_text(self.mTestTpsThreadNumInput, "10"))
         config['mode'] = 0
-        config['recv_buff'] = int(self.__get_ele_text(self.mTestNetworkBuffInput, "102400"))
+        config['sock_buff'] = int(self.__get_ele_text(self.mTestNetworkBuffInput, "102400"))
         if self.mTestModeCombox.currentText() == "离线模式":
             config['mode'] = 1
         return config

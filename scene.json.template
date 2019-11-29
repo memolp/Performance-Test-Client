@@ -3,9 +3,7 @@
   "host": "127.0.0.1",
   "port": 7090,  //PTC的ip和端口
   "thread_net": 4, //网络线程数量（线程池）
-  "thread_tps": 10, //并发线程数量（线程池）
-  "recv_buff": 1024000, //网络收包的size
-  "selector_num": 500, //selector的数量
+  "sock_buff": 1024000, //网络缓冲池的size
   "tps": 10, //并发数
   "index": 0, //用户的起始编号（多个进程压测时使用）
   "initdelay": 0, //初始化的间隔（按tps的数量进行初始化）

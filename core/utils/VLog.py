@@ -36,8 +36,8 @@ import traceback
 class VLog:
     """日志"""
     level = 1
-    # 性能日志单独做一个开关
-    Performance_Log = False
+    # 性能开关
+    PROFILE_OPEN = False
 
     @staticmethod
     def setLevel(level):
@@ -59,6 +59,17 @@ class VLog:
         if VLog.level <= 0:
             sLog = fmt.format(*args)
             print("{0} [DEBUG] {1}".format(datetime.datetime.now(), sLog))
+
+    @staticmethod
+    def Profile(fmt, *args):
+        """
+        性能日志
+        :param fmt:
+        :param args:
+        :return:
+        """
+        sLog = fmt.format(*args)
+        print("{0} [PROF] {1}".format(datetime.datetime.now(), sLog))
 
     @staticmethod
     def Info(fmt, *args):
@@ -133,6 +144,16 @@ def Debug(fmt, *args):
     :return:
     """
     VLog.Debug(fmt, *args)
+
+
+def Profile(fmt, *args):
+    """
+    性能日志
+    :param fmt:
+    :param args:
+    :return:
+    """
+    VLog.Profile(fmt, *args)
 
 
 def Info(fmt, *args):
