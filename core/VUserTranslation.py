@@ -211,7 +211,7 @@ class VUserTranslation(object):
                                                   trans_rate, int(trans['finish'] / trans['response'] * 1000))
             VLog.Info(msg)
 
-    def _timer_of_translation_display(self, last_index=5):
+    def timer_of_translation_display(self, last_index=5):
         """
         打印事务完成情况
         :param last_index:
@@ -240,7 +240,7 @@ class VUserTranslation(object):
         """
         self.cancel_thread()
         # 定时器启动
-        self.timer_thread = IntervalTimer(delay_time, self._timer_of_translation_display)
+        self.timer_thread = IntervalTimer(delay_time, self.timer_of_translation_display)
         self.timer_thread.start()
 
     def end_translation_display(self):
@@ -260,3 +260,10 @@ class VUserTranslation(object):
         """
         if self.timer_thread is not None and self.timer_thread.isAlive():
             self.timer_thread.cancel()
+
+    def is_all_translation_end(self):
+        """
+        返回是否所有事物都完成了
+        :return:
+        """
+        return len(self.round_trans) == 0

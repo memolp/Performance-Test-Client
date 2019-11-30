@@ -229,10 +229,12 @@ class VUserConcurrence:
             cost_time = time.time() - start_time
             # 超过0.6就打印出来，防止sleep的问题影响并发
             if cost_time > 0.6:
-                VLog.Fatal("[PERFORMANCE] _on_scene_concurrence cost_time :{0}!!!!!!!!", cost_time)
+                VLog.Profile("_on_scene_concurrence cost_time :{0}!!!!!!!!", cost_time)
             if cost_time < 1.0:
                 time.sleep(1.0 - cost_time)
+
         VLog.Info("[PTC] End Concurrence ............................")
+
         # 结束时打印事务完成信息
         self.user_trans.cancel_thread()
         self._end_concurrence()
@@ -245,7 +247,10 @@ class VUserConcurrence:
         :return:
         """
         for i in range(wait_time, 0, -1):
-            VLog.Info("[PTC] Wait for {0} seconds to display translation ...........", i - 1)
+            if not self.user_trans.is_all_translation_end():
+                self.user_trans.timer_of_translation_display(0)
+            else:
+                VLog.Info("[PTC] Wait for {0} seconds to display translation ...........", i - 1)
             time.sleep(1)
 
     def display_translation(self):

@@ -114,7 +114,7 @@ class PTCRPCClient(RPCClient):
         if VLog.PROFILE_OPEN:
             cost_time = time.time() * 1000 - begin_time
             if cost_time > 20:
-                VLog.Profile("[PERFORMANCE] OnReceice Cost Time:{0}ms", cost_time)
+                VLog.Profile("TCP Packet receive cost {0}ms", cost_time)
 
         # 最后删除数据
         del data
@@ -158,7 +158,7 @@ class PTCRPCClient(RPCClient):
         if VLog.PROFILE_OPEN:
             cost_time = time.time() * 1000 - begin_time
             if cost_time > 20:
-                VLog.Fatal("[PERFORMANCE] OnReceice Cost Time:{0}ms UID:{1}", cost_time)
+                VLog.Profile("UDP Packet receive cost {0}ms ", cost_time)
 
     def _msg_pack(self, uid, packet):
         """
