@@ -33,61 +33,68 @@ author:
 import os
 import sys
 import json
-import argparse
+import time
 import multiprocessing
 
 from core.utils import Loader
 from core.utils import VLog
 from core.VUserConcurrence import VUserConcurrence
 from core.VUserRPCClient import PTCRPCClient
-from core.rpc.RPCClient import RPCConnectType
 
 
-def Main():
+def OnProcessTest(scene_cfg, process_index=0, process_queue=None):
     """
-    入口
+    进程测试
+    :param scene_cfg: 压测配置
+    :param process_index: 启动的进程序号 0 ，1 ，2
+    :param process_queue: 进程通信的队列
     :return:
     """
-    try:
-        parse = argparse.ArgumentParser(prog="PTC_Console")
-        parse.add_argument("-host", help="RPC Server host", type=str)
-        parse.add_argument("-port", help="RPC Server port", type=int)
-        parse.add_argument("-user", help="User Count", type=int)
-        parse.add_argument("-tps", help="translation per second", type=int)
-        parse.add_argument("-index", help="User index", type=int, default=0)
-        parse.add_argument("-times", help="run test times", type=int, default=-1)
-        parse.add_argument("-initdelay", help="init user delay", type=float, default=0.1)
-        parse.add_argument("-script", help="script file abspath", type=str)
-        parse.add_argument("-thread_tps", help="thread of tps num", type=int, default=2)
-        parse.add_argument("-sock_buff", help="network recv buffer size", type=int, default=1024*1024)
-        # 解析
-        argument = parse.parse_args()
-        RunConsole(argument)
-    except Exception as e:
-        print(e)
+    # 添加压测脚本的环境变量
+    sys.path.append(os.path.dirname(__file__))
+    # 压测的场景脚本列表
+    test_scene_scripts = []
+    if isinstance(scene_cfg['script'], list or tuple):
+        for script_cfg in scene_cfg['script']:
+            script_module = Loader.LoadModule(script_cfg['file'])
+            if not script_module:
+                VLog.Error("[PTC] Load script {0} Error!".format(script_cfg['file']))
+                continue
+            scene = {"script": script_module, "times": script_cfg['times'], "max_times": script_cfg['max_times']}
+            test_scene_scripts.append(scene)
+    else:
+        script_module = Loader.LoadModule(scene_cfg['script'])
+        if not script_module:
+            VLog.Error("[PTC] Load script {0} Error!".format(scene_cfg['script']))
+            return
+        test_scene_scripts.append({"script": script_module, "times": scene_cfg['times'], "max_times": scene_cfg['times']})
+
+    if len(test_scene_scripts) <= 0:
+        return
+
+    # 创建RPC客户端
+    rpc_client = PTCRPCClient()
+    rpc_client.connect_rpc_server(scene_cfg['host'], scene_cfg['port'])
+    # 创建并发对象
+    concurrence = VUserConcurrence(process_queue)
+    concurrence.set_rpc_obj(rpc_client)
+    concurrence.set_users(scene_cfg['user'], scene_cfg['index'] + process_index * scene_cfg['user'])
+    concurrence.set_concurrence(scene_cfg['tps'], scene_cfg['thread_tps'])
+    # 执行压测 - 主循环
+    concurrence.run_multi_concurrence(scene_cfg['initdelay'], test_scene_scripts)
+    # 压测完成 - 关闭压测
+    concurrence.exit_concurrence()
+    rpc_client.close_connect()
 
 def RunConsole(argument):
     """"""
     # 压测脚本
-    script_file = argument.script
+    script_file = argument['script']
     if not os.path.exists(script_file):
         VLog.Error("[PTC] Test Script {0} not exist!",script_file)
         return
-    # 添加压测脚本目录
-    sys.path.append(os.path.dirname(__file__))
-    # 加载压测脚本
-    module = Loader.LoadModule(script_file)
-    if module is None:
-        VLog.Error("[PTC] Load Script {0} Error!", script_file)
-        return
-
-    rpc_client = PTCRPCClient()
-    rpc_client.connect_rpc_server(argument.host, argument.port, RPCConnectType.SOCK_TCP)
-    concurrence = VUserConcurrence()
-    concurrence.set_rpc_obj(rpc_client)
-    concurrence.set_users(argument.user, argument.index)
-    concurrence.set_concurrence(argument.tps, argument.thread_tps)
-    concurrence.run_concurrence(module, argument.times, argument.initdelay)
+    argument['process'] = argument.get("process", 1)
+    OnMultiTest(argument)
 
 
 def MultiTest(sence_cfg):
@@ -101,66 +108,86 @@ def MultiTest(sence_cfg):
         return
     with open(sence_cfg, "rb") as pf:
         scene_config = json.load(pf)
-    # 添加压测脚本目录
-    sys.path.append(os.path.dirname(__file__))
-    scenes = []
-    for script in scene_config['scripts']:
-        # 加载压测脚本
-        module = Loader.LoadModule(script['file'])
-        if module:
-            scene = {"script": module, "times": script['times'], "max_times":script['max_times']}
-            scenes.append(scene)
 
-    rpc_client = PTCRPCClient()
-    rpc_client.connect_rpc_server(scene_config['host'], scene_config['port'], RPCConnectType.SOCK_TCP)
-    concurrence = VUserConcurrence()
-    concurrence.set_rpc_obj(rpc_client)
-    concurrence.set_users(scene_config['user'],scene_config['index'])
-    concurrence.set_concurrence(scene_config['tps'], scene_config['thread_tps'])
-    concurrence.run_multi_concurrence(scene_config['initdelay'], scenes)
+    OnMultiTest(scene_config)
+
+
+def OnMultiTest(scene_config):
+    """
+    创建多进程压测
+    :param scece_cfg:
+    :return:
+    """
+    # 创建消息队列，并启动压测进程
+    process_queue = multiprocessing.Queue()
+    process_list = []
+    for i in range(scene_config['process']):
+        p = multiprocessing.Process(target=OnProcessTest, args=(scene_config, i, process_queue))
+        p.start()
+        process_list.append(p)
+
+    # 压测事务统计打印
+    TRANS_FORMAT = "[{0}] total:{1} finish:{2} response:{3}ms rate:{4}% tps:{5}"
+    test_all_translations = {}
+    while True:
+        # 如果全部进程压测完成，则退出
+        process_exit = True
+        for process in process_list:
+            if process.is_alive():
+                process_exit = False
+                break
+        if process_exit:
+            break
+
+        if process_queue.empty():
+            time.sleep(1)
+            continue
+        trans_msg = process_queue.get()
+        if trans_msg is None:
+            continue
+        trans_info = eval(trans_msg)
+        for mname in trans_info.keys():
+            if mname not in test_all_translations:
+                test_all_translations[mname] = trans_info[mname]
+                test_all_translations['record'] = 1
+            else:
+                test_all_translations[mname]['total'] += trans_info[mname]['total']
+                test_all_translations[mname]['finish'] += trans_info[mname]['finish']
+                test_all_translations[mname]['response'] += trans_info[mname]['response']
+                test_all_translations[mname]['record'] += 1
+            total = test_all_translations[mname]['total']
+            finish = test_all_translations[mname]['finish']
+            rate = round(finish / total * 100, 2)
+            response = round(test_all_translations[mname]['response'] / test_all_translations[mname]['record'], 2)
+            tps = int(test_all_translations[mname]['finish'] / response * 1000)
+            VLog.Info(TRANS_FORMAT.format(mname, total, finish, response, rate, tps))
+
 
 def LocalTest():
     """
     本地测试代码
     :return:
     """
-    # 压测脚本
-    script_file = "./script/test.py"
-    # 添加压测脚本目录
-    sys.path.append(os.path.dirname(__file__))
-    # 加载压测脚本
-    module = Loader.LoadModule(script_file)
-    if module is None:
-        return
-
-    user = 2000
-    tps = 1000
+    scene_cfg = dict()
+    scene_cfg['host'] = "127.0.0.1"
+    scene_cfg['port'] = 7090
+    scene_cfg['user'] = 500
+    scene_cfg['tps'] = 50
+    scene_cfg['thread_tps'] = 4
+    scene_cfg['index'] = 0
+    scene_cfg['initdelay'] = 0
+    scene_cfg['times'] = 2
+    scene_cfg['process'] = 2
+    scene_cfg['script'] = "./script/test.py"
 
     VLog.PROFILE_OPEN = True
+    VUserConcurrence.WAITING_TIME = 10
 
-    process = multiprocessing.Process()
-    import urllib3
-    rpc_client = PTCRPCClient()
-    rpc_client.connect_rpc_server("127.0.0.1", 7090, RPCConnectType.SOCK_TCP)
-    concurrence = VUserConcurrence()
-    concurrence.set_rpc_obj(rpc_client)
-    concurrence.set_users(user)
-    concurrence.set_concurrence(tps, 2)
-    concurrence.run_concurrence(module, 3600)
-
-    while True:
-        sign = input("'q' to exit\n'p' to print translation\n>:")
-        if sign == 'q':
-            break
-        elif sign == 'p':
-            concurrence.display_translation()
-    concurrence.exit_concurrence()
+    RunConsole(scene_cfg)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) <= 1:
-        LocalTest()
-    elif len(sys.argv) <= 2:
+    if len(sys.argv) > 1:
         MultiTest(sys.argv[1])
     else:
-        Main()
+        LocalTest()

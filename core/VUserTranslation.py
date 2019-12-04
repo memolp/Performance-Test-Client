@@ -180,12 +180,16 @@ class VUserTranslation(object):
     """
     用户事务统计
     """
-    def __init__(self):
-        """"""
+    def __init__(self, multi_queue=None):
+        """
+        事务统计，在多进程下直接通知给主进程
+        :param multi_queue: 
+        """
         self.round_trans = []
         self.round_trans_count = 0
         self.timer_thread = None
         self.trans_record = {}
+        self.multi_queue = multi_queue
 
     def create_round_translation(self, r_round):
         """
@@ -226,8 +230,11 @@ class VUserTranslation(object):
                 break
 
             if trans.isAllDone():
-                self.trans_record = trans.trans_finish_statics(self.trans_record)
-                trans.display_translation()
+                if self.multi_queue is None:
+                    self.trans_record = trans.trans_finish_statics(self.trans_record)
+                    trans.display_translation()
+                else:
+                    self.multi_queue.put(str(trans.trans_finish_statics()))
                 self.round_trans.pop(index)
                 break
             index += 1
@@ -249,6 +256,8 @@ class VUserTranslation(object):
         :return:
         """
         self.cancel_thread()
+        if self.multi_queue is not None:
+            return
         VLog.Info("============================= Concurrence Translation =============================")
         self._all_translation_display()
         VLog.Info("============================= Concurrence Translation =============================")
