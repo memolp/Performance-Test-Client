@@ -41,6 +41,8 @@ from core.utils import VLog
 from core.VUserConcurrence import VUserConcurrence
 from core.VUserRPCClient import PTCRPCClient
 
+# 多进程支持
+multiprocessing.freeze_support()
 
 def OnProcessTest(scene_cfg, process_index=0, process_queue=None):
     """
