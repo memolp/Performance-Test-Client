@@ -72,7 +72,7 @@ class PTCRPCClient(RPCClient):
         try:
             data = sock.recv(self.recv_from_size)
         except Exception as e:
-            VLog.Trace(e)
+            # VLog.Trace(e)
             return
 
         # 缓存包

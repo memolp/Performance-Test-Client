@@ -58,6 +58,8 @@ class VTranslation:
         #  总事务数 和 已完成事务数
         self.total_trans = 0
         self.finish_trans = 0
+        # 记录事务的创建时间
+        self.create_time = time.time()
 
     def Append(self, uid, mname):
         """
@@ -140,6 +142,15 @@ class VTranslation:
         """
         return self.total_trans == self.finish_trans
 
+    def isTimeOut(self, timeout=60):
+        """
+        事务超时
+        :return:
+        """
+        if time.time() - self.create_time >= timeout:
+            return True
+        return False
+
     def trans_finish_statics(self, strans_info=None, avg_percent=0.2):
         """
         事务完成统计
@@ -190,6 +201,7 @@ class VUserTranslation(object):
         self.timer_thread = None
         self.trans_record = {}
         self.multi_queue = multi_queue
+        self.trans_index = 0
 
     def create_round_translation(self, r_round):
         """
@@ -207,6 +219,20 @@ class VUserTranslation(object):
         打印全部事务
         :return:
         """
+        for i in range(len(self.round_trans)):
+            trans = self.round_trans[i]
+            while not trans.isEmpty() and not trans.isAllDone() and not trans.isTimeOut():
+                time.sleep(1)
+            if self.multi_queue is None:
+                self.trans_record = trans.trans_finish_statics(self.trans_record)
+                trans.display_translation()
+            else:
+                self.multi_queue.put(str(trans.trans_finish_statics()))
+
+        if self.multi_queue is not None:
+            return
+        VLog.Info("============================= Concurrence Translation =============================")
+        # 打印事务
         for mname in self.trans_record.keys():
             trans = self.trans_record[mname]
             trans_rate = round(trans['finish'] / trans['total'], 4) * 100
@@ -214,30 +240,37 @@ class VUserTranslation(object):
             msg = VTranslation.FORMAT_STR2.format(mname, trans['total'], trans['finish'], avg_response,
                                                   trans_rate, int(trans['finish'] / trans['response'] * 1000))
             VLog.Info(msg)
+        VLog.Info("============================= Concurrence Translation =============================")
 
-    def timer_of_translation_display(self, last_index=5):
+    def timer_of_translation_display(self, at_least=5):
         """
         打印事务完成情况
-        :param last_index:
+        :param at_least: 至少要有多少个事务记录后开始打印 这样最后at_least的几个不会打印，需要单独处理
         :return:
         """
-        index = 0
         size = len(self.round_trans)
-        while index < size - last_index:
-            trans = self.round_trans[index]
-            if trans.isEmpty():
-                self.round_trans.pop(index)
-                break
-
-            if trans.isAllDone():
-                if self.multi_queue is None:
-                    self.trans_record = trans.trans_finish_statics(self.trans_record)
-                    trans.display_translation()
-                else:
-                    self.multi_queue.put(str(trans.trans_finish_statics()))
-                self.round_trans.pop(index)
-                break
-            index += 1
+        if size < at_least:
+            return
+        trans = self.round_trans[self.trans_index]
+        # 如果第一个记录是空的，就删除-
+        if trans.isEmpty():
+            return self.round_trans.pop(self.trans_index)
+        # 如果事务已经完成,则进行记录，并移除-
+        elif trans.isAllDone():
+            self.round_trans.pop(self.trans_index)
+            if self.multi_queue is None:
+                self.trans_record = trans.trans_finish_statics(self.trans_record)
+                trans.display_translation()
+            else:
+                self.multi_queue.put(str(trans.trans_finish_statics()))
+        # 如果这个事务就是出问题了，也进行记录
+        elif trans.isTimeOut():
+            self.round_trans.pop(self.trans_index)
+            if self.multi_queue is None:
+                self.trans_record = trans.trans_finish_statics(self.trans_record)
+                trans.display_translation()
+            else:
+                self.multi_queue.put(str(trans.trans_finish_statics()))
 
     def start_translation_display(self, delay_time=1.0):
         """
@@ -255,12 +288,10 @@ class VUserTranslation(object):
         结束时打印全部的事务数据
         :return:
         """
+        # 取消定时器
         self.cancel_thread()
-        if self.multi_queue is not None:
-            return
-        VLog.Info("============================= Concurrence Translation =============================")
+        # 打印全部事务
         self._all_translation_display()
-        VLog.Info("============================= Concurrence Translation =============================")
 
     def cancel_thread(self):
         """

@@ -45,7 +45,6 @@ class VUserConcurrence:
     """
     Vuser manager and concurrence
     """
-    WAITING_TIME = 60
     def __init__(self, multi_queue=None):
         """
         用户压测并发类型
@@ -65,7 +64,18 @@ class VUserConcurrence:
         self.timer_thread = None
         # 用户事务统计
         self.user_trans = VUserTranslation(multi_queue)
+        # 多进程队列
         self.multi_queue = multi_queue
+        # 操作等待时间
+        self.wait_time = 60
+
+    def set_operator_time(self, o_time):
+        """
+        操作时间
+        :param o_time:
+        :return:
+        """
+        self.wait_time = o_time
 
     def set_rpc_obj(self, rpc_client):
         """
@@ -143,10 +153,12 @@ class VUserConcurrence:
                 scene['times'] *= 2
                 completed = False
             index += 1
+            # 如果遍历完一轮，需要看一下是否要退出
             if index >= size:
-                index = 0
-            if completed:
-                break
+                if completed:
+                    break
+                else:
+                    index = 0
 
     def _begin_init(self, script_module, init_delay):
         """
@@ -192,14 +204,15 @@ class VUserConcurrence:
         :param wait_time:
         :return:
         """
+        VLog.Info("[PTC] Wait for {0} seconds to Testing ...........", wait_time)
         for i in range(wait_time, 0, -1):
             if self.multi_queue is None:
                 VLog.Info("[PTC] Wait for {0} seconds to Testing ...........", i - 1)
             time.sleep(1)
 
-    def _on_scene_concurrence(self, script, init_delay, run_times):
+    def _on_scene_prepare_concurrence(self, script, init_delay, run_times):
         """
-        并发
+        准备并发
         :param script:
         :param init_delay:
         :param run_times:
@@ -210,8 +223,22 @@ class VUserConcurrence:
         self._begin_init(script, init_delay)
         # 等待客户端初始化完成
         self._wait_init_completed(1.0)
+        if self.multi_queue is not None:
+            # 上发初始化完成的消息
+            self.multi_queue.put({"msg": "init end"})
+            return
         # 等待一分钟后开始压测
-        self._end_init(self.WAITING_TIME)
+        self._end_init(self.wait_time)
+
+    def _on_scene_concurrence(self, script, init_delay, run_times):
+        """
+        并发
+        :param script:
+        :param init_delay:
+        :param run_times:
+        :return:
+        """
+
         # 启动事务打印
         self.user_trans.start_translation_display()
 
@@ -247,7 +274,7 @@ class VUserConcurrence:
 
         # 结束时打印事务完成信息
         self.user_trans.cancel_thread()
-        self._end_concurrence(self.WAITING_TIME)
+        self._end_concurrence(self.wait_time)
         self.display_translation()
 
     def _end_concurrence(self, wait_time=60):
@@ -256,12 +283,10 @@ class VUserConcurrence:
         :param wait_time:
         :return:
         """
+        VLog.Info("[PTC] Wait for {0} seconds to display translation ...........", wait_time)
         for i in range(wait_time, 0, -1):
-            if not self.user_trans.is_all_translation_end():
-                self.user_trans.timer_of_translation_display(0)
-            else:
-                if self.multi_queue is None:
-                    VLog.Info("[PTC] Wait for {0} seconds to display translation ...........", i - 1)
+            if self.multi_queue is None:
+                VLog.Info("[PTC] Wait for {0} seconds to display translation ...........", i - 1)
             time.sleep(1)
 
     def display_translation(self):

@@ -212,6 +212,9 @@ class VUser(object):
         :param timestamp: 指定完成事务的结束时间
         :return:
         """
+        if self.__translation is None:
+            VLog.Warning("[PTC] Translation {0} is not Start", mname)
+            return
         self.__translation.Finish(self.__uid, mname, timestamp)
 
     def Connect(self, host, port, sockid, socktype=0):
